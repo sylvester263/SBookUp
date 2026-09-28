@@ -1,0 +1,5 @@
+# Nitro's Netlify preset writes static files to dist/ and the server
+# function to .netlify/functions-internal/, which Netlify picks up itself.
+[build]
+  command = "npm run build"
+  publish = "dist"
