@@ -1,0 +1,11 @@
+-- =====================================================================
+-- Audit fix 3.1 (part 1 of 2)
+-- Adds the 'pending_verification' payment status: a customer has uploaded a
+-- bank-transfer proof and staff still need to check it.
+-- Kept in its own migration because a new enum value cannot be used in the
+-- same transaction that adds it.
+-- Existing meaning of the other values is unchanged:
+--   pending  = unpaid (shown as "Unpaid" in the UI)
+--   paid / failed / refunded
+-- =====================================================================
+alter type public.payment_status add value if not exists 'pending_verification' after 'pending';
