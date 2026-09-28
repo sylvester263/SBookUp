@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { queryOptions } from "@tanstack/react-query";
 import type { Product } from "@/lib/home-data";
 import { categorySubtreeIds, withCategoryJoin } from "@/lib/category-tree";
+import { variantStats } from "@/lib/pricing";
 
 export type Sort = "relevance" | "price_asc" | "price_desc" | "newest" | "rating" | "popular";
 
@@ -93,15 +94,17 @@ export function relatedProductsQuery(categoryId: string | null, excludeId: strin
     queryKey: ["products", "related", categoryId, excludeId],
     queryFn: async () => {
       if (!categoryId) return [] as Product[];
+      // Stock, pack and variant fields too, so the card shows the right button
+      // (e.g. "Choose options" for costumes). One query: variants are embedded.
       const { data, error } = await supabase
         .from("products")
-        .select("id,name,slug,price,sale_price,images,author,brand,isbn,is_featured")
+        .select("id,name,slug,price,sale_price,images,author,brand,isbn,is_featured,stock_quantity,sell_unit,pack_size,unit_label,product_variants(price,price_modifier,stock,is_active)")
         .eq("is_active", true)
         .eq("category_id", categoryId)
         .neq("id", excludeId)
         .limit(6);
       if (error) throw error;
-      return (data ?? []) as Product[];
+      return (data ?? []).map(({ product_variants, ...p }) => ({ ...p, ...variantStats(p, product_variants) })) as Product[];
     },
   });
 }

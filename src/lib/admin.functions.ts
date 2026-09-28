@@ -1308,7 +1308,8 @@ export const adminListVariants = createServerFn({ method: "POST" })
     await assertStaff(supabase, userId);
     const { data: rows, error } = await supabase
       .from("product_variants")
-      .select("id, product_id, name, sku, price, price_modifier, stock, weight_grams, is_active, option_values, image_url, created_at")
+      // "*" so compare_at_price is included once its migration is applied
+      .select("*")
       .eq("product_id", data.productId)
       .order("created_at");
     if (error) throw new Error(error.message);

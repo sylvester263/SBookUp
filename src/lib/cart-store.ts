@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 export type CartLine = {
   key: string; // product_id|variant_id or bundle_id
@@ -16,6 +16,7 @@ export type CartLine = {
 };
 
 const KEY = "jsn_cart_v1";
+export const CART_ADDED_EVENT = "cart:added";
 let state: CartLine[] = [];
 const listeners = new Set<() => void>();
 
@@ -55,6 +56,8 @@ export const cartStore = {
       state = [...state, { ...line, quantity: target }];
     }
     persist();
+    // Lets the header's cart badge animate on a real add (not on page load)
+    if (typeof window !== "undefined") window.dispatchEvent(new CustomEvent(CART_ADDED_EVENT, { detail: { added } }));
     return added;
   },
   /** Units of this line already in the cart. */
@@ -76,6 +79,24 @@ export const cartStore = {
 const EMPTY: CartLine[] = [];
 export function useCart() {
   return useSyncExternalStore(cartStore.subscribe, cartStore.get, () => EMPTY);
+}
+
+/** True for a moment after something is added to the cart (drives the badge bump). */
+export function useCartBump() {
+  const [bump, setBump] = useState(false);
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | undefined;
+    const on = () => {
+      setBump(false);
+      // Next frame so a second add restarts the animation
+      requestAnimationFrame(() => setBump(true));
+      clearTimeout(t);
+      t = setTimeout(() => setBump(false), 500);
+    };
+    window.addEventListener(CART_ADDED_EVENT, on);
+    return () => { window.removeEventListener(CART_ADDED_EVENT, on); clearTimeout(t); };
+  }, []);
+  return bump;
 }
 
 export function cartTotals(lines: CartLine[]) {

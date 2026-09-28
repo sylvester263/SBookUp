@@ -540,6 +540,51 @@ export type Database = {
         };
         Relationships: [];
       };
+      homepage_sections: {
+        Row: {
+          config: Json;
+          created_at: string;
+          ends_at: string | null;
+          id: string;
+          is_active: boolean;
+          seed_key: string | null;
+          sort_order: number;
+          starts_at: string | null;
+          subtitle: string | null;
+          title: string | null;
+          type: string;
+          updated_at: string;
+        };
+        Insert: {
+          config?: Json;
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          is_active?: boolean;
+          seed_key?: string | null;
+          sort_order?: number;
+          starts_at?: string | null;
+          subtitle?: string | null;
+          title?: string | null;
+          type: string;
+          updated_at?: string;
+        };
+        Update: {
+          config?: Json;
+          created_at?: string;
+          ends_at?: string | null;
+          id?: string;
+          is_active?: boolean;
+          seed_key?: string | null;
+          sort_order?: number;
+          starts_at?: string | null;
+          subtitle?: string | null;
+          title?: string | null;
+          type?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       newsletter_campaigns: {
         Row: {
           body: string;
@@ -798,6 +843,7 @@ export type Database = {
       product_variants: {
         Row: {
           attributes: Json;
+          compare_at_price: number | null;
           created_at: string;
           id: string;
           image_url: string | null;
@@ -813,6 +859,7 @@ export type Database = {
         };
         Insert: {
           attributes?: Json;
+          compare_at_price?: number | null;
           created_at?: string;
           id?: string;
           image_url?: string | null;
@@ -828,6 +875,7 @@ export type Database = {
         };
         Update: {
           attributes?: Json;
+          compare_at_price?: number | null;
           created_at?: string;
           id?: string;
           image_url?: string | null;
@@ -961,6 +1009,9 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string;
+          delivery_city: string | null;
+          delivery_method: string | null;
+          delivery_zone_id: string | null;
           email: string | null;
           id: string;
           name: string | null;
@@ -972,6 +1023,9 @@ export type Database = {
         };
         Insert: {
           created_at?: string;
+          delivery_city?: string | null;
+          delivery_method?: string | null;
+          delivery_zone_id?: string | null;
           email?: string | null;
           id: string;
           name?: string | null;
@@ -983,6 +1037,9 @@ export type Database = {
         };
         Update: {
           created_at?: string;
+          delivery_city?: string | null;
+          delivery_method?: string | null;
+          delivery_zone_id?: string | null;
           email?: string | null;
           id?: string;
           name?: string | null;
@@ -1324,6 +1381,23 @@ export type Database = {
           sender_email: string | null;
           sender_name: string | null;
           store_name: string;
+          announcement_enabled: boolean;
+          announcement_interval_seconds: number;
+          announcements: Json;
+          app_store_url: string | null;
+          newsletter_heading: string | null;
+          newsletter_text: string | null;
+          pickup_address: string | null;
+          pickup_enabled: boolean;
+          play_store_url: string | null;
+          powered_by_text: string | null;
+          powered_by_url: string | null;
+          social_links: Json;
+          support_hours: string | null;
+          theme_preset: string;
+          whatsapp_hours: string | null;
+          whatsapp_message: string | null;
+          whatsapp_number: string | null;
           tax_rate: number;
           updated_at: string;
         };
@@ -1352,6 +1426,23 @@ export type Database = {
           sender_email?: string | null;
           sender_name?: string | null;
           store_name?: string;
+          announcement_enabled?: boolean;
+          announcement_interval_seconds?: number;
+          announcements?: Json;
+          app_store_url?: string | null;
+          newsletter_heading?: string | null;
+          newsletter_text?: string | null;
+          pickup_address?: string | null;
+          pickup_enabled?: boolean;
+          play_store_url?: string | null;
+          powered_by_text?: string | null;
+          powered_by_url?: string | null;
+          social_links?: Json;
+          support_hours?: string | null;
+          theme_preset?: string;
+          whatsapp_hours?: string | null;
+          whatsapp_message?: string | null;
+          whatsapp_number?: string | null;
           tax_rate?: number;
           updated_at?: string;
         };
@@ -1380,6 +1471,23 @@ export type Database = {
           sender_email?: string | null;
           sender_name?: string | null;
           store_name?: string;
+          announcement_enabled?: boolean;
+          announcement_interval_seconds?: number;
+          announcements?: Json;
+          app_store_url?: string | null;
+          newsletter_heading?: string | null;
+          newsletter_text?: string | null;
+          pickup_address?: string | null;
+          pickup_enabled?: boolean;
+          play_store_url?: string | null;
+          powered_by_text?: string | null;
+          powered_by_url?: string | null;
+          social_links?: Json;
+          support_hours?: string | null;
+          theme_preset?: string;
+          whatsapp_hours?: string | null;
+          whatsapp_message?: string | null;
+          whatsapp_number?: string | null;
           tax_rate?: number;
           updated_at?: string;
         };

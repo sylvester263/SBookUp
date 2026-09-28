@@ -22,6 +22,8 @@ export const shopSearchSchema = z.object({
   max: z.number().min(0).optional().catch(undefined),
   type: z.array(z.string().max(120)).max(30).optional().catch(undefined),
   f: z.record(z.array(z.string().max(200)).max(50)).optional().catch(undefined),
+  /** "Shop Deals": only products on sale (sale price, or a variant below its was price). */
+  on_sale: z.preprocess((v) => (v === true || v === "true" ? true : undefined), z.literal(true).optional()).catch(undefined),
 });
 export type ShopSearch = z.infer<typeof shopSearchSchema>;
 
@@ -33,7 +35,7 @@ export function parseShopSearch(raw: Record<string, unknown>): ShopSearch {
 export const PER_PAGE = 24;
 
 /** Request body for catalog_search. */
-export function buildCatalogParams(categorySlug: string | undefined, s: ShopSearch, extra: { only?: "new_arrivals" | "best_sellers"; perPage?: number } = {}) {
+export function buildCatalogParams(categorySlug: string | undefined, s: ShopSearch, extra: { only?: "new_arrivals" | "best_sellers" | "on_sale"; perPage?: number } = {}) {
   const filters = Object.fromEntries(Object.entries(s.f ?? {}).filter(([, v]) => Array.isArray(v) && v.length));
   return {
     category: categorySlug ?? null,
@@ -45,7 +47,7 @@ export function buildCatalogParams(categorySlug: string | undefined, s: ShopSear
     max_price: s.max ?? null,
     types: s.type?.length ? s.type : null,
     filters,
-    only: extra.only ?? null,
+    only: extra.only ?? (s.on_sale ? "on_sale" : null),
   };
 }
 
@@ -56,6 +58,8 @@ export type ShopItem = {
   author: string | null; brand: string | null; isbn: string | null; is_featured: boolean; stock_quantity: number;
   sell_unit: string | null; pack_size: number | null; unit_label: string | null; is_new: boolean;
   variant_count: number; variant_min: number | null; variant_max: number | null; variant_in_stock: boolean | null;
+  /** Missing until the on_sale migration is applied. */
+  variant_was_max?: number | null;
 };
 export type ShopResult = {
   not_found?: boolean;
@@ -112,10 +116,11 @@ export function activeChips(s: ShopSearch, result: Pick<ShopResult, "types" | "f
     chips.push({ key: "price", label: `Price: ${txt}`, patch: { min: undefined, max: undefined, page: undefined } });
   }
   if (s.q) chips.push({ key: "q", label: `Search: “${s.q}”`, patch: { q: undefined, page: undefined } });
+  if (s.on_sale) chips.push({ key: "on_sale", label: "Deals only", patch: { on_sale: undefined, page: undefined } });
   return chips;
 }
 
-export const clearAllPatch: Partial<ShopSearch> = { type: undefined, f: undefined, min: undefined, max: undefined, q: undefined, page: undefined };
+export const clearAllPatch: Partial<ShopSearch> = { type: undefined, f: undefined, min: undefined, max: undefined, q: undefined, on_sale: undefined, page: undefined };
 
 // ---------------------------------------------------------------- categories
 export type NavCategory = {

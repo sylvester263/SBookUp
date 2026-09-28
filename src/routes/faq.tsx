@@ -94,7 +94,7 @@ function FAQPage() {
           <p className="text-center text-muted-foreground py-12">No FAQs match your search.</p>
         )}
         {filtered.map((g) => (
-          <div key={g.category} className="mb-8">
+          <div key={g.category} id={g.category.toLowerCase()} className="mb-8 scroll-mt-40">
             <h2 className="font-display text-xl text-brand-navy mb-3">{g.category}</h2>
             <Accordion type="single" collapsible className="bg-white rounded-xl border border-border">
               {g.items.map((it, i) => (

@@ -5,7 +5,7 @@ import { Link, useRouteContext, useRouter, useRouterState } from "@tanstack/reac
 import {
   LayoutDashboard, Package, Layers, FolderTree, ShoppingBag, Users, Ticket,
   Image as ImageIcon, Megaphone, BarChart3, Settings, History, LogOut, Menu, X, Star,
-  ChevronLeft, ChevronRight, ChevronDown, School, Inbox, SlidersHorizontal,
+  ChevronLeft, ChevronRight, ChevronDown, School, Inbox, SlidersHorizontal, LayoutTemplate,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { adminUnreadMessageCount } from "@/lib/admin.functions";
@@ -22,7 +22,8 @@ const NAV: NavItem[] = [
   { to: "/admin/customers", label: "Customers", icon: Users },
   { to: "/admin/messages", label: "Messages", icon: Inbox },
   { to: "/admin/coupons", label: "Coupons", icon: Ticket },
-  { to: "/admin/banners", label: "Banners", icon: ImageIcon },
+  { to: "/admin/homepage", label: "Homepage", icon: LayoutTemplate },
+  { to: "/admin/banners", label: "Banners (old)", icon: ImageIcon },
   { to: "/admin/marketing", label: "Marketing", icon: Megaphone },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
   { to: "/admin/settings", label: "Settings", icon: Settings, adminOnly: true },

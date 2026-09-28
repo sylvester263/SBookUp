@@ -107,23 +107,26 @@ export function SearchAutocomplete({ compact = false }: { compact?: boolean }) {
   return (
     <div ref={wrapRef} className="relative w-full">
       <div className="relative">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         <Input
           value={q}
           onChange={(e) => { setQ(e.target.value); setOpen(true); setActive(-1); }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKey}
-          placeholder={compact ? "Search by ISBN, title, author..." : "Search books by ISBN, title, author, class..."}
-          className={`pr-12 ${compact ? "h-10" : "h-11"} rounded-full border-brand-teal/30 focus-visible:ring-brand-teal`}
-          aria-label="Search"
+          placeholder={compact ? "Search products, ISBN…" : "Search books, stationery, gifts, toys or ISBN…"}
+          className={`pl-11 pr-24 ${compact ? "h-10" : "h-12"} rounded-full border-border bg-muted/40 focus-visible:bg-white focus-visible:ring-store-primary`}
+          aria-label="Search products"
+          role="combobox"
+          aria-expanded={open && (suggestions.length > 0 || showEmpty)}
+          aria-autocomplete="list"
           autoComplete="off"
         />
         <button
           type="button"
           onClick={() => submit(q)}
-          aria-label="Search"
-          className={`absolute right-1 ${compact ? "top-1 h-8 w-8" : "top-1 h-9 w-9"} rounded-full bg-brand-teal text-white flex items-center justify-center hover:bg-brand-teal-dark transition`}
+          className={`absolute right-1 top-1/2 -translate-y-1/2 ${compact ? "h-8 px-3" : "h-10 px-5"} rounded-full bg-store-primary text-xs font-bold uppercase tracking-wide text-store-primary-foreground transition hover:bg-store-primary-hover`}
         >
-          <Search className="h-4 w-4" />
+          Search
         </button>
       </div>
 

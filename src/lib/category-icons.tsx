@@ -1,0 +1,51 @@
+// Icon per category slug, used when a category has no image (mega menu, mobile
+// drawer, homepage). Unknown slugs fall back to a shopping bag.
+import {
+  BookOpen,
+  Pencil,
+  NotebookPen,
+  Palette,
+  Ruler,
+  Gift,
+  ShoppingBag,
+  Wallet,
+  Gamepad2,
+  Trophy,
+  Sparkles,
+  Shirt,
+  Baby,
+  PartyPopper,
+  Droplets,
+  Briefcase,
+  type LucideIcon,
+} from "lucide-react";
+
+export const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  books: BookOpen,
+  "school-books": BookOpen,
+  stationery: Pencil,
+  notebooks: NotebookPen,
+  "sketch-books": Palette,
+  "drafting-pads": Ruler,
+  gifts: Gift,
+  "gift-wrapping-sheets": Gift,
+  "gift-bags": ShoppingBag,
+  "money-folders": Wallet,
+  "toys-games": Gamepad2,
+  toys: Gamepad2,
+  "board-games": Gamepad2,
+  "sports-items": Trophy,
+  "character-costumes": Sparkles,
+  costumes: Sparkles,
+  "fancy-costumes": Sparkles,
+  "school-uniforms": Shirt,
+  uniforms: Shirt,
+  "baby-items": Baby,
+  baby: Baby,
+  "party-essentials": PartyPopper,
+  party: PartyPopper,
+  "lunch-boxes": Briefcase,
+  "water-bottles": Droplets,
+};
+
+export const categoryIcon = (slug: string): LucideIcon => CATEGORY_ICONS[slug] ?? ShoppingBag;

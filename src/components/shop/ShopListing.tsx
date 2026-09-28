@@ -9,15 +9,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ProductCard, pkr } from "@/components/layout/site-chrome";
+import { pkr } from "@/components/layout/site-chrome";
+import { ProductCard, ProductCardSkeleton } from "@/components/store/ProductCard";
 import {
   SORTS, PER_PAGE, shopQuery, navCategoriesQuery, ancestry, categoryHref, activeChips, clearAllPatch, toggleValue, cleanFilters,
   type ShopSearch, type ShopResult, type Facet,
 } from "@/lib/shop";
-import type { Product } from "@/lib/home-data";
 
 export function ShopListing({ categorySlug, search, update }: {
   categorySlug?: string;
@@ -88,7 +87,7 @@ export function ShopListing({ categorySlug, search, update }: {
                 <SlidersHorizontal className="h-4 w-4 mr-1" /> Filters{chips.length ? ` (${chips.length})` : ""}
               </Button>
               <Select value={search.sort ?? "new_arrivals"} onValueChange={(v) => update({ sort: v === "new_arrivals" ? undefined : (v as ShopSearch["sort"]), page: undefined })}>
-                <SelectTrigger className="w-[170px] h-9"><SelectValue /></SelectTrigger>
+                <SelectTrigger className="w-[170px] h-9" aria-label="Sort products"><SelectValue /></SelectTrigger>
                 <SelectContent>{SORTS.map((s) => <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -109,7 +108,7 @@ export function ShopListing({ categorySlug, search, update }: {
           {/* Grid */}
           {q.isLoading || !result ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
-              {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="aspect-[3/5] rounded-xl" />)}
+              {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
             </div>
           ) : result.not_found ? (
             <Empty title="Category not found" text="This category doesn't exist or is no longer available." />
@@ -120,9 +119,13 @@ export function ShopListing({ categorySlug, search, update }: {
               action={chips.length ? <Button variant="outline" onClick={() => update(clearAllPatch)}>Clear all filters</Button> : null}
             />
           ) : (
-            <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 ${q.isFetching ? "opacity-60 transition-opacity" : ""}`}>
-              {result.items.map((p) => <ProductCard key={p.id} p={p as unknown as Product} />)}
-            </div>
+            <>
+              {/* Keeps headings in order (h1 page title → h2 → product names in h3) */}
+              <h2 className="sr-only">Products</h2>
+              <div className={`grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4 ${q.isFetching ? "opacity-60 transition-opacity" : ""}`}>
+                {result.items.map((p, i) => <ProductCard key={p.id} p={p} priority={i < 4} />)}
+              </div>
+            </>
           )}
 
           {/* Pagination */}

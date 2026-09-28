@@ -65,3 +65,16 @@ export const prepareUpload = async (file: File) => {
   const blob = await compressImage(file);
   return { blob, contentType: "image/webp" as const };
 };
+
+/**
+ * Like prepareUpload, with a larger max width (e.g. 1920 for hero banners) and
+ * the final pixel size, which the storefront uses as width / height (no layout shift).
+ */
+export const prepareUploadSized = async (file: File, maxWidth: number) => {
+  validateImage(file);
+  const blob = await compressImage(file, maxWidth);
+  const bitmap = await createImageBitmap(blob);
+  const size = { width: bitmap.width, height: bitmap.height };
+  bitmap.close();
+  return { blob, contentType: "image/webp" as const, ...size };
+};

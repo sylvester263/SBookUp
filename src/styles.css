@@ -1,6 +1,16 @@
 @import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
+/* Self-hosted fonts (Latin subset, the weights we use), bundled with the site:
+   no render-blocking request to Google, font-display: swap. */
+@import "@fontsource/dm-sans/latin-400.css";
+@import "@fontsource/dm-sans/latin-500.css";
+@import "@fontsource/dm-sans/latin-600.css";
+@import "@fontsource/dm-sans/latin-700.css";
+@import "@fontsource/playfair-display/latin-500.css";
+@import "@fontsource/playfair-display/latin-600.css";
+@import "@fontsource/playfair-display/latin-700.css";
+@import "@fontsource/playfair-display/latin-800.css";
 
 @theme inline {
   --font-display: "Playfair Display", ui-serif, Georgia, serif;
@@ -20,6 +30,16 @@
   --color-danger: var(--danger);
   --color-danger-light: var(--danger-light);
 
+  /* Storefront palette (see :root and the [data-theme] presets below) */
+  --color-store-primary: var(--store-primary);
+  --color-store-primary-hover: var(--store-primary-hover);
+  --color-store-primary-foreground: var(--store-primary-foreground);
+  --color-store-soft: var(--store-soft);
+  --color-store-soft-foreground: var(--store-soft-foreground);
+  --color-store-price: var(--store-price);
+  --color-store-price-foreground: var(--store-price-foreground);
+  --color-store-ink: var(--store-ink);
+  --color-store-deal: var(--store-deal);
 }
 
 @custom-variant dark (&:is(.dark *));
@@ -91,6 +111,22 @@
   --brand-gold-light: #FFF8E8;
   --brand-navy: #1A1A2E;
   --brand-cream: #FAFAF8;
+
+  /*
+   * Storefront palette: the ONE place to change the shop's colours.
+   * Used by the product card, carousels, banners, header and footer
+   * (bg-store-primary, bg-store-soft, bg-store-price …).
+   * Default = our brand colours. Presets override these below.
+   */
+  --store-primary: #1A6B6B;            /* buttons, links, arrows */
+  --store-primary-hover: #0F4444;
+  --store-primary-foreground: #FFFFFF;
+  --store-soft: #E8F5F5;               /* announcement bar, footer */
+  --store-soft-foreground: #1A1A2E;
+  --store-price: #FFF4C7;              /* price pill */
+  --store-price-foreground: #1A1A2E;
+  --store-ink: #1A1A2E;                /* headings, product names */
+  --store-deal: #C62828;               /* "Shop Deals" highlight */
 
   /* Text */
   --text-primary: #1A1A2E;
@@ -169,6 +205,23 @@
   --sidebar-ring: oklch(0.45 0.06 190);
 }
 
+/*
+ * "teal" preset: the reference design's palette (brighter teal, light-teal
+ * bands, pale-yellow price pill). Turn on with <html data-theme="teal">.
+ * The primary is kept dark enough for white button text to pass WCAG AA.
+ */
+:root[data-theme="teal"] {
+  --store-primary: #00827C;
+  --store-primary-hover: #006A65;
+  --store-primary-foreground: #FFFFFF;
+  --store-soft: #DDF3F1;
+  --store-soft-foreground: #0B2E2C;
+  --store-price: #FFF3B8;
+  --store-price-foreground: #1A1A1A;
+  --store-ink: #1A1A1A;
+  --store-deal: #C62828;
+}
+
 .dark {
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
@@ -228,19 +281,31 @@
   animation: marquee 30s linear infinite;
 }
 
+@keyframes cart-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.45); }
+  100% { transform: scale(1); }
+}
+.animate-cart-bump { animation: cart-bump 0.45s ease-out; }
+
 .hide-scrollbar::-webkit-scrollbar { display: none; }
 .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 @keyframes wa-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(37,211,102,0.55), 0 4px 12px rgba(37,211,102,0.4); }
-  70% { box-shadow: 0 0 0 14px rgba(37,211,102,0), 0 4px 12px rgba(37,211,102,0.4); }
-  100% { box-shadow: 0 0 0 0 rgba(37,211,102,0), 0 4px 12px rgba(37,211,102,0.4); }
+  0% { transform: scale(1); opacity: 0.55; }
+  70%, 100% { transform: scale(1.5); opacity: 0; }
 }
-.wa-pulse { animation: wa-pulse 3s ease-out infinite; }
+/* Ring drawn by ::after and animated with transform / opacity only (compositor-friendly) */
+.wa-pulse { box-shadow: 0 4px 12px rgba(37,211,102,0.4); }
+.wa-pulse::after {
+  content: ""; position: absolute; inset: 0; border-radius: 9999px; background: rgba(37,211,102,0.55);
+  z-index: -1; animation: wa-pulse 3s ease-out infinite; will-change: transform, opacity;
+}
 
 
 body { font-family: var(--font-sans); background: var(--brand-cream); }
-h1,h2,h3,h4 { font-family: var(--font-display); }
+/* In the base layer so a utility class (e.g. font-sans) can override it */
+@layer base { h1,h2,h3,h4 { font-family: var(--font-display); } }
 
 /* ===== Global mobile rules ===== */
 html { scroll-behavior: smooth; }
@@ -257,7 +322,7 @@ img { max-width: 100%; height: auto; }
 body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
 
 :focus-visible {
-  outline: 2px solid #1A6B6B;
+  outline: 2px solid var(--store-primary);
   outline-offset: 2px;
 }
 

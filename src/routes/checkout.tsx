@@ -16,6 +16,7 @@ import { useCart, cartStore } from "@/lib/cart-store";
 import { useAuth } from "@/lib/auth-context";
 import { placeOrder, quoteOrder } from "@/lib/account.functions";
 import { getStoreSettings } from "@/lib/site.functions";
+import { useDeliveryChoice } from "@/lib/delivery-location";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — SchoolBooksExperts" }] }),
@@ -72,6 +73,13 @@ function CheckoutPage() {
   useEffect(() => {
     if (removedBundles.length) toast.info(`${removedBundles.join(", ")} ${removedBundles.length === 1 ? "is" : "are"} no longer available and ${removedBundles.length === 1 ? "was" : "were"} removed from your cart.`);
   }, [removedBundles]);
+
+  // Pre-fill the city chosen in the header ("Deliver to …"), unless one is typed already.
+  const deliveryChoice = useDeliveryChoice();
+  const savedCity = deliveryChoice?.method === "delivery" ? deliveryChoice.city : "";
+  useEffect(() => {
+    if (savedCity) setAddress((a) => (a.city ? a : { ...a, city: savedCity }));
+  }, [savedCity]);
 
   // Debounce the city so we don't re-quote on every keystroke.
   useEffect(() => {

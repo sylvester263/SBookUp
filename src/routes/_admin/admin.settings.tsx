@@ -1,4 +1,4 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { Link, createFileRoute, redirect } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
@@ -18,7 +18,7 @@ import {
   adminUpdateStoreSettings,
 } from "@/lib/admin.functions";
 import { getStoreSettings } from "@/lib/site.functions";
-import { DEFAULT_HOME_SECTIONS, HOME_SECTION_LABELS, parseHomeSections, parsePriceBands, type HomeSection } from "@/lib/home-sections";
+import { SiteChromeSettings } from "@/components/admin/SiteChromeSettings";
 
 export const Route = createFileRoute("/_admin/admin/settings")({
   // Store settings and shipping zones are admin-only (managers are redirected).
@@ -63,8 +63,6 @@ const STORE_DEFAULTS = {
   enable_cod: true,
   enable_bank_transfer: true,
   school_features_enabled: false,
-  home_sections: DEFAULT_HOME_SECTIONS as HomeSection[],
-  price_bands: [] as { label: string; min: number | null; max: number | null }[],
 };
 
 function SettingsPage() {
@@ -105,8 +103,6 @@ function SettingsPage() {
         enable_cod: d.enable_cod !== false,
         enable_bank_transfer: d.enable_bank_transfer !== false,
         school_features_enabled: d.school_features_enabled === true,
-        home_sections: parseHomeSections(d.home_sections),
-        price_bands: parsePriceBands(d.price_bands),
       });
     }
   }, [settingsQuery.data]);
@@ -173,6 +169,7 @@ function SettingsPage() {
       <Tabs defaultValue="store" className="space-y-4">
         <TabsList>
           <TabsTrigger value="store">Store Info</TabsTrigger>
+          <TabsTrigger value="chrome">Header &amp; Footer</TabsTrigger>
           <TabsTrigger value="shipping">Shipping Zones</TabsTrigger>
           <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="homepage">Homepage</TabsTrigger>
@@ -203,7 +200,7 @@ function SettingsPage() {
                 <Textarea value={store.address} onChange={(e) => setStore({ ...store, address: e.target.value })} rows={2} />
               </div>
               <div className="md:col-span-2">
-                <label className="text-sm font-medium">Logo URL (used in emails)</label>
+                <label className="text-sm font-medium">Logo URL (header, footer and emails; about 400×110 px, PNG or SVG)</label>
                 <Input value={store.logo_url} onChange={(e) => setStore({ ...store, logo_url: e.target.value })} placeholder="https://…/logo.png" />
               </div>
               <div>
@@ -225,6 +222,10 @@ function SettingsPage() {
           </div>
         </TabsContent>
 
+
+        <TabsContent value="chrome">
+          <SiteChromeSettings settings={settingsQuery.data as Record<string, unknown> | undefined} />
+        </TabsContent>
 
         <TabsContent value="shipping">
           <div className="bg-white rounded-xl border">
@@ -325,7 +326,10 @@ function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="homepage">
-          <HomepageSettings store={store} setStore={setStore} saving={saving} onSave={saveStore} />
+          <div className="bg-white rounded-xl border p-6 max-w-2xl space-y-3">
+            <p className="text-sm">The homepage is now built from sections: hero slider, product carousels, banners, "Shop by Price" and more.</p>
+            <Button asChild className="bg-teal-600 hover:bg-teal-700"><Link to="/admin/homepage">Open Admin → Homepage</Link></Button>
+          </div>
         </TabsContent>
 
         <TabsContent value="seo">
@@ -403,54 +407,5 @@ function SettingsPage() {
         </SheetContent>
       </Sheet>
     </AdminShell>
-  );
-}
-
-function HomepageSettings({ store, setStore, saving, onSave }: { store: any; setStore: (s: any) => void; saving: boolean; onSave: () => void }) {
-  const sections: HomeSection[] = store.home_sections ?? [];
-  const bands: { label: string; min: number | null; max: number | null }[] = store.price_bands ?? [];
-  const setSections = (next: HomeSection[]) => setStore({ ...store, home_sections: next });
-  const setBands = (next: typeof bands) => setStore({ ...store, price_bands: next });
-  const move = (i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= sections.length) return;
-    const next = [...sections];
-    [next[i], next[j]] = [next[j], next[i]];
-    setSections(next);
-  };
-  const numOrNull = (v: string) => (v === "" ? null : Math.max(0, Number(v)));
-  return (
-    <div className="bg-white rounded-xl border p-6 max-w-2xl space-y-6">
-      <div>
-        <h3 className="font-semibold">Homepage sections</h3>
-        <p className="text-sm text-muted-foreground">Shown below the hero banners, in this order. Sections with no products are skipped automatically.</p>
-        <div className="mt-3 space-y-2">
-          {sections.map((s, i) => (
-            <div key={s.key} className="flex items-center gap-3 border rounded-lg px-3 py-2">
-              <Switch checked={s.enabled} onCheckedChange={(v) => setSections(sections.map((x, k) => (k === i ? { ...x, enabled: v } : x)))} />
-              <span className={`flex-1 text-sm ${s.enabled ? "" : "text-muted-foreground"}`}>{HOME_SECTION_LABELS[s.key]}</span>
-              <Button size="sm" variant="ghost" onClick={() => move(i, -1)} disabled={i === 0}>↑</Button>
-              <Button size="sm" variant="ghost" onClick={() => move(i, 1)} disabled={i === sections.length - 1}>↓</Button>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div>
-        <h3 className="font-semibold">“Shop by price” bands</h3>
-        <p className="text-sm text-muted-foreground">Each band links to all products with that price filter. Leave min or max empty for “under” / “and above”.</p>
-        <div className="mt-3 space-y-2">
-          {bands.map((b, i) => (
-            <div key={i} className="grid grid-cols-[1fr_110px_110px_auto] gap-2 items-center">
-              <Input value={b.label} onChange={(e) => setBands(bands.map((x, k) => (k === i ? { ...x, label: e.target.value } : x)))} placeholder="Label" />
-              <Input type="number" value={b.min ?? ""} onChange={(e) => setBands(bands.map((x, k) => (k === i ? { ...x, min: numOrNull(e.target.value) } : x)))} placeholder="Min Rs." />
-              <Input type="number" value={b.max ?? ""} onChange={(e) => setBands(bands.map((x, k) => (k === i ? { ...x, max: numOrNull(e.target.value) } : x)))} placeholder="Max Rs." />
-              <Button size="icon" variant="ghost" onClick={() => setBands(bands.filter((_, k) => k !== i))}><Trash2 className="w-4 h-4 text-destructive" /></Button>
-            </div>
-          ))}
-          <Button size="sm" variant="outline" onClick={() => setBands([...bands, { label: "", min: null, max: null }])}><Plus className="w-4 h-4 mr-1" /> Add band</Button>
-        </div>
-      </div>
-      <Button onClick={onSave} disabled={saving} className="bg-teal-600 hover:bg-teal-700">{saving ? "Saving..." : "Save Homepage"}</Button>
-    </div>
   );
 }

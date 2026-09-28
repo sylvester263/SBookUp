@@ -10,11 +10,14 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { SiteShell, ProductCard, HScroller, FALLBACK_IMG, pkr } from "@/components/layout/site-chrome";
+import { SiteShell, FALLBACK_IMG, pkr } from "@/components/layout/site-chrome";
+import { ProductCard } from "@/components/store/ProductCard";
+import { ProductCarousel } from "@/components/store/ProductCarousel";
+import { SectionHeading } from "@/components/store/SectionHeading";
 import { productBySlugQuery, relatedProductsQuery } from "@/lib/product-queries";
 import { attributeDefsQuery, navCategoriesQuery, ancestry, categoryHref } from "@/lib/shop";
 import { axesFromVariants, findVariant, isOptionAvailable, initialSelection } from "@/lib/variant-picker";
-import { formatPackPrice, isPack, packLabel } from "@/lib/pricing";
+import { formatPackPrice, isPack, packLabel, wasPriceOf } from "@/lib/pricing";
 import { SITE_NAME, breadcrumbJsonLd, jsonLd, plainText, productJsonLd, siteUrl, type SeoProduct } from "@/lib/seo";
 import { WishlistButton } from "@/components/site/WishlistButton";
 import { ProductReviews } from "@/components/site/ProductReviews";
@@ -118,7 +121,10 @@ function ProductDetailPage() {
   const variantUnit = (v: any) => (v.price != null ? Number(v.price) : baseUnit + Number(v.price_modifier ?? 0));
   const sale = variant ? null : baseSale;
   const displayPrice = variant ? variantUnit(variant) : baseUnit;
-  const saving = sale ? p.price - sale : 0;
+  // Struck-through "was" price: the product's regular price when on sale, or the
+  // selected variant's compare-at price (display only).
+  const wasPrice = variant ? wasPriceOf(displayPrice, variant.compare_at_price) : sale ? Number(p.price) : null;
+  const saving = wasPrice ? wasPrice - displayPrice : 0;
   const stock = variant ? Number(variant.stock ?? 0) : needsVariant ? Math.max(0, ...variants.map((v) => Number(v.stock ?? 0))) : p.stock_quantity ?? 0;
   const stockState = stock <= 0 ? "out" : stock < (p.low_stock_threshold ?? 5) ? "low" : "ok";
   // A variant's own image comes first when that variant is selected
@@ -199,7 +205,7 @@ function ProductDetailPage() {
             <div>
               <div className="flex items-baseline gap-2">
                 <div className="text-2xl md:text-3xl font-bold text-brand-teal">{pkr(displayPrice)}{pack && <span className="text-base font-medium text-muted-foreground"> / pack</span>}</div>
-                {sale && <div className="text-sm md:text-lg text-gray-400 line-through">{pkr(p.price)}</div>}
+                {wasPrice != null && <div className="text-sm md:text-lg text-gray-400 line-through">{pkr(wasPrice)}</div>}
               </div>
               {saving > 0 && <span className="inline-block mt-1 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">Save {pkr(saving)}</span>}
               {pack && <div className="text-sm text-muted-foreground mt-1"><span className="font-semibold text-brand-gold">{packLabel(p)}</span> · {formatPackPrice(displayPrice, p)}</div>}
@@ -247,7 +253,7 @@ function ProductDetailPage() {
               </div>
             )}
 
-            <div className={`text-sm flex items-center gap-2 ${stockState === "ok" ? "text-green-600" : stockState === "low" ? "text-orange-600" : "text-red-600"}`}>
+            <div className={`text-sm flex items-center gap-2 ${stockState === "ok" ? "text-green-700" : stockState === "low" ? "text-orange-600" : "text-red-600"}`}>
               <span className={`inline-block h-2 w-2 rounded-full ${stockState === "ok" ? "bg-green-600" : stockState === "low" ? "bg-orange-600" : "bg-red-600"}`} />
               {stockState === "ok" ? `In Stock (${stock} left)` : stockState === "low" ? `Low Stock — only ${stock} left!` : "Out of Stock"}
             </div>
@@ -255,9 +261,9 @@ function ProductDetailPage() {
             {/* Qty stepper */}
             <div className="flex items-center justify-center md:justify-start gap-0 pt-2">
               <div className="flex items-center border border-border rounded-md">
-                <button onClick={() => setQty(Math.max(1, qty - 1))} className="h-11 w-11 flex items-center justify-center hover:bg-muted"><Minus className="h-4 w-4" /></button>
+                <button type="button" aria-label="Decrease quantity" onClick={() => setQty(Math.max(1, qty - 1))} className="h-11 w-11 flex items-center justify-center hover:bg-muted"><Minus className="h-4 w-4" /></button>
                 <span className="w-12 h-11 flex items-center justify-center text-center font-medium">{qty}</span>
-                <button onClick={() => setQty(Math.min(Math.max(1, stock), qty + 1))} disabled={qty >= stock} className="h-11 w-11 flex items-center justify-center hover:bg-muted disabled:opacity-40"><Plus className="h-4 w-4" /></button>
+                <button type="button" aria-label="Increase quantity" onClick={() => setQty(Math.min(Math.max(1, stock), qty + 1))} disabled={qty >= stock} className="h-11 w-11 flex items-center justify-center hover:bg-muted disabled:opacity-40"><Plus className="h-4 w-4" /></button>
               </div>
             </div>
 
@@ -335,11 +341,12 @@ function ProductDetailPage() {
         </div>
 
         {related && related.length > 0 && (
-          <div className="px-4 md:px-0">
-            <HScroller title="You May Also Like">
-              {related.map((rp) => <div key={rp.id} className="w-[140px] md:w-[200px] shrink-0 snap-start"><ProductCard p={rp} /></div>)}
-            </HScroller>
-          </div>
+          <section className="px-4 md:px-0 py-6 md:py-10">
+            <SectionHeading title="You May Also Like" />
+            <ProductCarousel label="You May Also Like">
+              {related.map((rp) => <ProductCard key={rp.id} p={rp} />)}
+            </ProductCarousel>
+          </section>
         )}
       </div>
 
@@ -421,9 +428,9 @@ function ShareRow({ name }: { name: string }) {
   return (
     <div className="flex items-center gap-2 pt-2">
       <Share2 className="h-4 w-4 text-muted-foreground" />
-      <a href={`https://wa.me/?text=${encodeURIComponent(name + " " + url)}`} target="_blank" rel="noreferrer" className="h-11 w-11 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center"><MessageCircle className="h-4 w-4" /></a>
-      <a href={`https://facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" className="h-11 w-11 rounded-full bg-[#1877F2] text-white flex items-center justify-center"><Facebook className="h-4 w-4" /></a>
-      <button onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copied"); }} className="h-11 w-11 rounded-full bg-muted hover:bg-brand-teal hover:text-white flex items-center justify-center"><Copy className="h-4 w-4" /></button>
+      <a href={`https://wa.me/?text=${encodeURIComponent(name + " " + url)}`} target="_blank" rel="noreferrer" aria-label="Share on WhatsApp" className="h-11 w-11 rounded-full bg-green-500 hover:bg-green-600 text-white flex items-center justify-center"><MessageCircle className="h-4 w-4" /></a>
+      <a href={`https://facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" aria-label="Share on Facebook" className="h-11 w-11 rounded-full bg-[#1877F2] text-white flex items-center justify-center"><Facebook className="h-4 w-4" /></a>
+      <button type="button" aria-label="Copy link" onClick={() => { navigator.clipboard.writeText(url); toast.success("Link copied"); }} className="h-11 w-11 rounded-full bg-muted hover:bg-brand-teal hover:text-white flex items-center justify-center"><Copy className="h-4 w-4" /></button>
     </div>
   );
 }

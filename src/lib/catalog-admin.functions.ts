@@ -246,6 +246,9 @@ const variantRowSchema = z.object({
   name: z.string().trim().max(80).optional().or(z.literal("")),
   sku: z.string().trim().max(80).optional().or(z.literal("")).nullable(),
   price: z.number().min(0).nullable(),
+  // Display-only "was" price. Left out (undefined) unless set or being cleared,
+  // so saving still works on a database without the column yet.
+  compare_at_price: z.number().min(0).nullable().optional(),
   stock: z.number().int().min(0),
   image_url: z.string().url().max(500).optional().or(z.literal("")).nullable(),
   is_active: z.boolean().default(true),
@@ -278,6 +281,7 @@ export const adminSaveVariants = createServerFn({ method: "POST" })
         name: r.name || Object.values(values).join(" / "),
         sku: r.sku || null,
         price: r.price,
+        ...(r.compare_at_price !== undefined ? { compare_at_price: r.compare_at_price } : {}),
         stock: r.stock,
         image_url: r.image_url || null,
         is_active: r.is_active,

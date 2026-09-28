@@ -59,6 +59,7 @@ import { Route as AdminAdminOrdersRouteImport } from './routes/_admin/admin.orde
 import { Route as AdminAdminMessagesRouteImport } from './routes/_admin/admin.messages'
 import { Route as AdminAdminMarketingRouteImport } from './routes/_admin/admin.marketing'
 import { Route as AdminAdminLogsRouteImport } from './routes/_admin/admin.logs'
+import { Route as AdminAdminHomepageRouteImport } from './routes/_admin/admin.homepage'
 import { Route as AdminAdminCustomersRouteImport } from './routes/_admin/admin.customers'
 import { Route as AdminAdminCouponsRouteImport } from './routes/_admin/admin.coupons'
 import { Route as AdminAdminCategoriesRouteImport } from './routes/_admin/admin.categories'
@@ -321,6 +322,11 @@ const AdminAdminLogsRoute = AdminAdminLogsRouteImport.update({
   path: '/admin/logs',
   getParentRoute: () => AdminRouteRoute,
 } as any)
+const AdminAdminHomepageRoute = AdminAdminHomepageRouteImport.update({
+  id: '/admin/homepage',
+  path: '/admin/homepage',
+  getParentRoute: () => AdminRouteRoute,
+} as any)
 const AdminAdminCustomersRoute = AdminAdminCustomersRouteImport.update({
   id: '/admin/customers',
   path: '/admin/customers',
@@ -392,6 +398,7 @@ export interface FileRoutesByFullPath {
   '/admin/categories': typeof AdminAdminCategoriesRoute
   '/admin/coupons': typeof AdminAdminCouponsRoute
   '/admin/customers': typeof AdminAdminCustomersRoute
+  '/admin/homepage': typeof AdminAdminHomepageRoute
   '/admin/logs': typeof AdminAdminLogsRoute
   '/admin/marketing': typeof AdminAdminMarketingRoute
   '/admin/messages': typeof AdminAdminMessagesRoute
@@ -449,6 +456,7 @@ export interface FileRoutesByTo {
   '/admin/categories': typeof AdminAdminCategoriesRoute
   '/admin/coupons': typeof AdminAdminCouponsRoute
   '/admin/customers': typeof AdminAdminCustomersRoute
+  '/admin/homepage': typeof AdminAdminHomepageRoute
   '/admin/logs': typeof AdminAdminLogsRoute
   '/admin/marketing': typeof AdminAdminMarketingRoute
   '/admin/messages': typeof AdminAdminMessagesRoute
@@ -509,6 +517,7 @@ export interface FileRoutesById {
   '/_admin/admin/categories': typeof AdminAdminCategoriesRoute
   '/_admin/admin/coupons': typeof AdminAdminCouponsRoute
   '/_admin/admin/customers': typeof AdminAdminCustomersRoute
+  '/_admin/admin/homepage': typeof AdminAdminHomepageRoute
   '/_admin/admin/logs': typeof AdminAdminLogsRoute
   '/_admin/admin/marketing': typeof AdminAdminMarketingRoute
   '/_admin/admin/messages': typeof AdminAdminMessagesRoute
@@ -568,6 +577,7 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/customers'
+    | '/admin/homepage'
     | '/admin/logs'
     | '/admin/marketing'
     | '/admin/messages'
@@ -625,6 +635,7 @@ export interface FileRouteTypes {
     | '/admin/categories'
     | '/admin/coupons'
     | '/admin/customers'
+    | '/admin/homepage'
     | '/admin/logs'
     | '/admin/marketing'
     | '/admin/messages'
@@ -684,6 +695,7 @@ export interface FileRouteTypes {
     | '/_admin/admin/categories'
     | '/_admin/admin/coupons'
     | '/_admin/admin/customers'
+    | '/_admin/admin/homepage'
     | '/_admin/admin/logs'
     | '/_admin/admin/marketing'
     | '/_admin/admin/messages'
@@ -1096,6 +1108,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminLogsRouteImport
       parentRoute: typeof AdminRouteRoute
     }
+    '/_admin/admin/homepage': {
+      id: '/_admin/admin/homepage'
+      path: '/admin/homepage'
+      fullPath: '/admin/homepage'
+      preLoaderRoute: typeof AdminAdminHomepageRouteImport
+      parentRoute: typeof AdminRouteRoute
+    }
     '/_admin/admin/customers': {
       id: '/_admin/admin/customers'
       path: '/admin/customers'
@@ -1155,6 +1174,7 @@ interface AdminRouteRouteChildren {
   AdminAdminCategoriesRoute: typeof AdminAdminCategoriesRoute
   AdminAdminCouponsRoute: typeof AdminAdminCouponsRoute
   AdminAdminCustomersRoute: typeof AdminAdminCustomersRoute
+  AdminAdminHomepageRoute: typeof AdminAdminHomepageRoute
   AdminAdminLogsRoute: typeof AdminAdminLogsRoute
   AdminAdminMarketingRoute: typeof AdminAdminMarketingRoute
   AdminAdminMessagesRoute: typeof AdminAdminMessagesRoute
@@ -1175,6 +1195,7 @@ const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminAdminCategoriesRoute: AdminAdminCategoriesRoute,
   AdminAdminCouponsRoute: AdminAdminCouponsRoute,
   AdminAdminCustomersRoute: AdminAdminCustomersRoute,
+  AdminAdminHomepageRoute: AdminAdminHomepageRoute,
   AdminAdminLogsRoute: AdminAdminLogsRoute,
   AdminAdminMarketingRoute: AdminAdminMarketingRoute,
   AdminAdminMessagesRoute: AdminAdminMessagesRoute,

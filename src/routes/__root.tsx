@@ -1,10 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { jsonLd } from "@/lib/seo";
 import {
   Outlet,
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -14,6 +14,7 @@ import appCss from "../styles.css?url";
 import { reportError } from "../lib/error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/lib/auth-context";
+import { navCategoriesQuery } from "@/lib/shop";
 
 function NotFoundComponent() {
   return (
@@ -81,21 +82,19 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   loader: async ({ context }) => {
     const { getStoreSettings } = await import("@/lib/site.functions");
-    try {
-      const settings = await context.queryClient.ensureQueryData({
-        queryKey: ["store-settings"],
-        queryFn: () => getStoreSettings(),
-      });
-      return { settings };
-    } catch {
-      return { settings: null };
-    }
+    // Settings + categories are loaded on the server so the header, nav and
+    // footer are server-rendered (no pop-in); the categories request runs in parallel.
+    const [settings] = await Promise.all([
+      context.queryClient.ensureQueryData({ queryKey: ["store-settings"], queryFn: () => getStoreSettings() }).catch(() => null),
+      context.queryClient.ensureQueryData(navCategoriesQuery).catch(() => []),
+    ]);
+    return { settings };
   },
   head: ({ loaderData }) => {
     const s: any = (loaderData as any)?.settings ?? {};
-    const title = s.meta_title || "SchoolBooksExperts — A Complete Family Store, Lahore Since 1968";
-    const description = s.meta_description || "Shop books, stationery, uniforms, toys, baby items and party supplies. Free delivery in Lahore on orders above PKR 2,000.";
     const siteName = s.store_name || "SchoolBooksExperts";
+    const title = s.meta_title || `${siteName} — Books, Stationery, Gifts & Toys`;
+    const description = s.meta_description || `Shop books, stationery, gifts, toys, sports items and character costumes at ${siteName}. Delivery across Pakistan.`;
     return {
       meta: [
         { charSet: "utf-8" },
@@ -108,7 +107,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { property: "og:type", content: "website" },
         { property: "og:site_name", content: siteName },
         { name: "twitter:card", content: "summary_large_image" },
-        { name: "theme-color", content: "#1A6B6B" },
+        { name: "theme-color", content: s.theme_preset === "teal" ? "#00827C" : "#1A6B6B" },
         { name: "twitter:title", content: title },
         { name: "twitter:description", content: description },
         { name: "apple-mobile-web-app-title", content: siteName },
@@ -116,32 +115,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         { name: "apple-mobile-web-app-status-bar-style", content: "default" },
       ],
       links: [
-        { rel: "preconnect", href: "https://fonts.googleapis.com" },
-        { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
-        {
-          rel: "stylesheet",
-          href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap",
-        },
+        // Fonts are self-hosted in styles.css (@fontsource)
         { rel: "stylesheet", href: appCss },
         { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
         { rel: "apple-touch-icon", href: "/favicon.svg" },
         { rel: "mask-icon", href: "/favicon.svg", color: "#1A6B6B" },
       ],
-      scripts: [
-        {
-          type: "application/ld+json",
-          children: jsonLd({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            name: siteName,
-            description: "A Complete Family Store serving Lahore since 1968.",
-            foundingDate: "1968",
-            email: s.contact_email || undefined,
-            telephone: s.contact_phone || undefined,
-            address: { "@type": "PostalAddress", streetAddress: s.address || undefined, addressLocality: "Lahore", addressCountry: "PK" },
-          }),
-        },
-      ],
+      // Organization + WebSite JSON-LD are on the homepage (src/routes/index.tsx).
     };
   },
   shellComponent: RootShell,
@@ -151,8 +131,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  // Colour preset from admin Settings (src/styles.css: :root[data-theme="teal"])
+  const theme = useRouterState({
+    select: (st) => (st.matches[0]?.loaderData as { settings?: { theme_preset?: string } | null } | undefined)?.settings?.theme_preset,
+  });
   return (
-    <html lang="en">
+    <html lang="en" data-theme={theme === "teal" ? "teal" : undefined}>
       <head>
         <HeadContent />
       </head>

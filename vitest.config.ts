@@ -8,7 +8,7 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts", "supabase/tests/*.test.mjs"],
+    include: ["src/**/*.test.ts", "src/**/*.test.tsx", "supabase/tests/*.test.mjs"],
     // Each database suite builds a fresh in-memory Postgres; give it time.
     testTimeout: 180_000,
     hookTimeout: 180_000,

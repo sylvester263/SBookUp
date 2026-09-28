@@ -293,7 +293,12 @@ function AttributeField({ def, value, error, onChange }: { def: EffectiveAttribu
   return <F label={label} error={error} help={def.help_text ?? undefined}>{input}</F>;
 }
 
-type MatrixRow = { id?: string; option_values: Record<string, string>; name: string; sku: string; price: string; stock: string; image_url: string; is_active: boolean; selected?: boolean };
+type MatrixRow = {
+  id?: string; option_values: Record<string, string>; name: string; sku: string; price: string;
+  /** Display-only "was" price; `hadCompare` records whether it was set when loaded, so clearing it is saved. */
+  compare_at_price: string; hadCompare?: boolean;
+  stock: string; image_url: string; is_active: boolean; selected?: boolean;
+};
 
 /** Variant matrix: pick sizes / colours, generate every combination, edit per row, bulk-set. */
 function VariantMatrix({ productId, axes, basePrice }: { productId: string; axes: EffectiveAttribute[]; basePrice: number }) {
@@ -311,7 +316,9 @@ function VariantMatrix({ productId, axes, basePrice }: { productId: string; axes
     if (!variants.data) return;
     setRows((variants.data as any[]).map((v) => ({
       id: v.id, option_values: (v.option_values ?? {}) as Record<string, string>, name: v.name, sku: v.sku ?? "",
-      price: v.price == null ? "" : String(v.price), stock: String(v.stock ?? 0), image_url: v.image_url ?? "", is_active: v.is_active !== false,
+      price: v.price == null ? "" : String(v.price),
+      compare_at_price: v.compare_at_price == null ? "" : String(v.compare_at_price), hadCompare: v.compare_at_price != null,
+      stock: String(v.stock ?? 0), image_url: v.image_url ?? "", is_active: v.is_active !== false,
     })));
   }, [variants.data]);
 
@@ -323,7 +330,7 @@ function VariantMatrix({ productId, axes, basePrice }: { productId: string; axes
     const combos = variantCombinations(axes.map((a) => ({ key: a.key, values: picked[a.key] ?? [] })));
     if (!combos.length || axes.some((a) => !(picked[a.key] ?? []).length)) return toast.error(`Pick at least one ${axes.map((a) => a.label).join(" and one ")}`);
     const have = new Set(rows.map((r) => comboKey(r.option_values)));
-    const add = combos.filter((c) => !have.has(comboKey(c))).map((c) => ({ option_values: c, name: Object.values(c).join(" / "), sku: "", price: "", stock: "0", image_url: "", is_active: true }));
+    const add = combos.filter((c) => !have.has(comboKey(c))).map((c) => ({ option_values: c, name: Object.values(c).join(" / "), sku: "", price: "", compare_at_price: "", stock: "0", image_url: "", is_active: true }));
     setRows((r) => [...r, ...add]);
     toast.success(add.length ? `Added ${add.length} combinations — set stock and save` : "All combinations already exist");
   }
@@ -339,7 +346,12 @@ function VariantMatrix({ productId, axes, basePrice }: { productId: string; axes
       await saveFn({
         data: {
           product_id: productId,
-          rows: rows.map((r) => ({ id: r.id, name: r.name, sku: r.sku || null, price: r.price === "" ? null : Number(r.price), stock: Number(r.stock) || 0, image_url: r.image_url || null, is_active: r.is_active, option_values: r.option_values })),
+          rows: rows.map((r) => ({
+            id: r.id, name: r.name, sku: r.sku || null, price: r.price === "" ? null : Number(r.price),
+            // Only sent when set, or when an existing value is being cleared
+            compare_at_price: r.compare_at_price !== "" ? Number(r.compare_at_price) : r.hadCompare ? null : undefined,
+            stock: Number(r.stock) || 0, image_url: r.image_url || null, is_active: r.is_active, option_values: r.option_values,
+          })),
         },
       });
       toast.success("Variants saved");
@@ -391,7 +403,7 @@ function VariantMatrix({ productId, axes, basePrice }: { productId: string; axes
                 <tr>
                   <th className="p-1.5"><Checkbox checked={rows.every((r) => r.selected)} onCheckedChange={(v) => setRows((r) => r.map((x) => ({ ...x, selected: !!v })))} /></th>
                   {axes.map((a) => <th key={a.key} className="p-1.5 text-left">{a.label}</th>)}
-                  <th className="p-1.5 text-left">SKU</th><th className="p-1.5 text-left">Price (blank = {basePrice})</th><th className="p-1.5 text-left">Stock</th><th className="p-1.5 text-left">Image URL</th><th className="p-1.5">Active</th><th />
+                  <th className="p-1.5 text-left">SKU</th><th className="p-1.5 text-left">Price (blank = {basePrice})</th><th className="p-1.5 text-left" title="Optional. Shown struck through when higher than the price.">Was price</th><th className="p-1.5 text-left">Stock</th><th className="p-1.5 text-left">Image URL</th><th className="p-1.5">Active</th><th />
                 </tr>
               </thead>
               <tbody>
@@ -401,6 +413,7 @@ function VariantMatrix({ productId, axes, basePrice }: { productId: string; axes
                     {axes.map((a) => <td key={a.key} className="p-1.5 whitespace-nowrap">{r.option_values[a.key] ?? "—"}</td>)}
                     <td className="p-1"><Input className="h-7 w-28" value={r.sku} onChange={(e) => upd(i, { sku: e.target.value })} /></td>
                     <td className="p-1"><Input className="h-7 w-24" type="number" value={r.price} onChange={(e) => upd(i, { price: e.target.value })} /></td>
+                    <td className="p-1"><Input className="h-7 w-24" type="number" min={0} aria-label="Was price" value={r.compare_at_price} onChange={(e) => upd(i, { compare_at_price: e.target.value })} /></td>
                     <td className="p-1"><Input className="h-7 w-20" type="number" value={r.stock} onChange={(e) => upd(i, { stock: e.target.value })} /></td>
                     <td className="p-1"><Input className="h-7 w-40" value={r.image_url} onChange={(e) => upd(i, { image_url: e.target.value })} placeholder="https://…" /></td>
                     <td className="p-1.5 text-center"><Switch checked={r.is_active} onCheckedChange={(v) => upd(i, { is_active: v })} /></td>
