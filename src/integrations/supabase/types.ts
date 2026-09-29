@@ -1355,6 +1355,33 @@ export type Database = {
         };
         Relationships: [];
       };
+      store_private_settings: {
+        Row: {
+          admin_emails: string[];
+          contact_form_email: string | null;
+          id: boolean;
+          order_notification_email: string | null;
+          reply_to_email: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          admin_emails?: string[];
+          contact_form_email?: string | null;
+          id?: boolean;
+          order_notification_email?: string | null;
+          reply_to_email?: string | null;
+          updated_at?: string;
+        };
+        Update: {
+          admin_emails?: string[];
+          contact_form_email?: string | null;
+          id?: boolean;
+          order_notification_email?: string | null;
+          reply_to_email?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       store_settings: {
         Row: {
           address: string | null;
@@ -1381,6 +1408,9 @@ export type Database = {
           sender_email: string | null;
           sender_name: string | null;
           store_name: string;
+          legal_name: string | null;
+          footer_text: string | null;
+          invoice_header: string | null;
           announcement_enabled: boolean;
           announcement_interval_seconds: number;
           announcements: Json;
@@ -1426,6 +1456,9 @@ export type Database = {
           sender_email?: string | null;
           sender_name?: string | null;
           store_name?: string;
+          legal_name?: string | null;
+          footer_text?: string | null;
+          invoice_header?: string | null;
           announcement_enabled?: boolean;
           announcement_interval_seconds?: number;
           announcements?: Json;
@@ -1471,6 +1504,9 @@ export type Database = {
           sender_email?: string | null;
           sender_name?: string | null;
           store_name?: string;
+          legal_name?: string | null;
+          footer_text?: string | null;
+          invoice_header?: string | null;
           announcement_enabled?: boolean;
           announcement_interval_seconds?: number;
           announcements?: Json;
@@ -1628,6 +1664,7 @@ export type Database = {
           stock_quantity: number;
         }[];
       };
+      grant_configured_admin_roles: { Args: Record<PropertyKey, never>; Returns: number };
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"];

@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { BookOpen, Users, Package, Layers, MapPin, Heart, Award, Sparkles } from "lucide-react";
+import { BookOpen, Users, Package, Layers, MapPin, Heart, Truck, Sparkles } from "lucide-react";
 import { SiteShell } from "@/components/layout/site-chrome";
 
 export const Route = createFileRoute("/about")({
   head: () => ({
     meta: [
-      { title: "About SchoolBooksExperts — Serving Lahore Families Since 1968" },
-      { name: "description", content: "Three generations of Lahore's trusted family store for books, stationery, uniforms, toys and more. Our story since 1968." },
+      { title: "About SchoolBooksExperts — Books, Stationery, Gifts, Toys & More" },
+      { name: "description", content: "SchoolBooksExperts is an online store for books, stationery, gifts, toys & games, sports items and character costumes, delivering across Pakistan." },
       { property: "og:title", content: "About SchoolBooksExperts" },
-      { property: "og:description", content: "Serving Lahore families since 1968." },
+      { property: "og:description", content: "Books, stationery, gifts, toys & games, sports items and character costumes — delivered across Pakistan." },
       { property: "og:url", content: "/about" },
     ],
     links: [{ rel: "canonical", href: "/about" }],
@@ -17,14 +17,14 @@ export const Route = createFileRoute("/about")({
 });
 
 const STATS = [
-  { value: "50+", label: "Years of Service", icon: Award },
-  { value: "10,000+", label: "Families Served", icon: Users },
+  { value: "6", label: "Departments", icon: Layers },
   { value: "1,000+", label: "Products", icon: Package },
-  { value: "5", label: "Departments", icon: Layers },
+  { value: "10,000+", label: "Families Served", icon: Users },
+  { value: "Nationwide", label: "Delivery", icon: Truck },
 ];
 
 const VALUES = [
-  { icon: Heart, title: "Family First", body: "Three generations of our family personally curating products for yours." },
+  { icon: Heart, title: "Families First", body: "Every product is picked with students, parents and gift-givers in mind." },
   { icon: BookOpen, title: "Education Matters", body: "From Class 1 to A-Levels — every book, every board, every year." },
   { icon: Sparkles, title: "Quality Promise", body: "We stock only what we'd buy for our own children." },
 ];
@@ -35,33 +35,34 @@ function AboutPage() {
       <section className="relative h-[360px] md:h-[460px] overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?w=1600&q=80"
-          alt="SchoolBooksExperts storefront in Urdu Bazaar, Lahore"
+          alt="Shelves of books at SchoolBooksExperts"
           className="absolute inset-0 w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-brand-navy/85 to-brand-navy/40" />
         <div className="relative container mx-auto px-4 h-full flex flex-col justify-center text-white">
           <p className="text-brand-gold uppercase tracking-widest text-sm font-semibold">Our Story</p>
-          <h1 className="font-display text-4xl md:text-6xl font-bold mt-2 max-w-2xl">Serving Lahore Families Since 1968</h1>
-          <p className="mt-4 max-w-xl text-white/80">A complete family store built on three generations of trust, care and community.</p>
+          <h1 className="font-display text-4xl md:text-6xl font-bold mt-2 max-w-2xl">Everything for School, Play and Gifting</h1>
+          <p className="mt-4 max-w-xl text-white/80">Books, stationery, gifts, toys &amp; games, sports items and character costumes — in one place.</p>
         </div>
       </section>
 
       <section className="container mx-auto px-4 py-16 grid md:grid-cols-2 gap-12">
         <div className="prose max-w-none">
-          <h2 className="font-display text-3xl text-brand-navy mb-4">From a tiny shop in Urdu Bazaar</h2>
+          <h2 className="font-display text-3xl text-brand-navy mb-4">Who we are</h2>
           <p className="text-muted-foreground">
-            SchoolBooksExperts opened its doors in 1968 with a single shelf of textbooks and a promise: every child in Lahore deserves easy access
-            to the books they need. What began as a one-room stationery shop in Urdu Bazaar quickly became a household name as families discovered
-            our knack for stocking exactly the right edition, in the right size, at the right time.
+            SchoolBooksExperts is a one-stop store for families, students and teachers. Our roots are in Urdu Bazaar, Lahore, and our
+            online catalogue brings the same range to homes across Pakistan: the right textbook and edition, the stationery on the school
+            list, and something fun for after school.
           </p>
           <p className="text-muted-foreground">
-            Over the decades we grew alongside the families we served — adding uniforms when their children started school, baby supplies when
-            grandchildren arrived, and toys, board games and party items to keep family life joyful. Today we are five departments under one roof,
-            and a curated online catalogue that ships across Pakistan.
+            Today we have six departments: <strong>Books</strong>, <strong>Stationery</strong>, <strong>Gifts</strong>,{" "}
+            <strong>Toys &amp; Games</strong>, <strong>Sports Items</strong> and <strong>Character Costumes</strong>. From readers and
+            reference books to notebooks, art supplies, board games, cricket bats and dress-up favourites, we stock what families actually
+            need, all year round.
           </p>
           <p className="text-muted-foreground">
-            Three generations later we are still family-run. Our promise has never changed: thoughtful selection, fair prices, and the kind of
-            service that makes you feel like you've walked into a neighbour's shop — because, for many of you, that's exactly what we are.
+            Our promise is simple: thoughtful selection, fair prices, careful packing and friendly help whenever you need it — online, on
+            WhatsApp or in person.
           </p>
         </div>
         <div className="space-y-4">
@@ -71,10 +72,7 @@ function AboutPage() {
             className="rounded-xl shadow-lg w-full h-72 object-cover"
             loading="lazy"
           />
-          <div className="grid grid-cols-2 gap-4">
-            <img src="https://images.unsplash.com/photo-1503602642458-232111445657?w=600&q=80" alt="Stationery" className="rounded-xl h-40 w-full object-cover" loading="lazy" />
-            <img src="https://images.unsplash.com/photo-1607344645866-009c320b63e0?w=600&q=80" alt="Uniforms" className="rounded-xl h-40 w-full object-cover" loading="lazy" />
-          </div>
+          <img src="https://images.unsplash.com/photo-1503602642458-232111445657?w=900&q=80" alt="Stationery" className="rounded-xl h-40 w-full object-cover" loading="lazy" />
         </div>
       </section>
 
@@ -122,7 +120,7 @@ function AboutPage() {
             </h3>
             <p className="text-muted-foreground mb-4">
               Walk in any day and you'll find one of us behind the counter — ready to help you find that one tricky textbook,
-              measure a uniform, or recommend a thoughtful gift.
+              pick out a board game, or recommend a thoughtful gift.
             </p>
             <dl className="text-sm space-y-2">
               <div><dt className="inline font-medium text-brand-navy">Address: </dt><dd className="inline text-muted-foreground">Urdu Bazaar, Lahore, Pakistan</dd></div>

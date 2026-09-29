@@ -34,7 +34,7 @@ New: `src/components/layout/{AnnouncementBar,SiteHeader,SiteFooter,DeliveryLocat
   - Before the migration, `/shop?on_sale=true` shows "no products" (the old search doesn't know `on_sale`).
   - [!] Visual / responsive check in a browser still not done (Chrome extension not connected).
 
-**Client must fill in (Admin → Settings):** real phone (live value is the placeholder `+92 300 0000000`), phone hours, WhatsApp number / hours / message, email, social links, app links (optional), announcement messages, logo URL. The live store name is "Jahangir's Sons" (see the store-name question in CATALOG_PROGRESS.md).
+**Client must fill in (Admin → Settings):** real phone (live value is the placeholder `+92 300 0000000`), phone hours, WhatsApp number / hours / message, email, social links, app links (optional), announcement messages, logo URL. The store name is set to SchoolBooksExperts by the rebrand migration `20260929100000_rebrand_schoolbooksexperts.sql`.
 
 ## Phase 3 — homepage section builder
 New: `src/lib/homepage-sections.ts` (types, Zod config schemas, defaults, image sizes, scheduling, sources), `src/lib/homepage-queries.ts`, `src/lib/homepage-admin.functions.ts`, `src/components/admin/homepage/{fields,SectionEditor}.tsx`, route `/admin/homepage` (sidebar: **Homepage**; the old page is now "Banners (old)").
@@ -62,10 +62,10 @@ New: `src/components/home/{HomePage,HomeSections}.tsx`, `src/components/home/sec
   - Layout: centred `container` column, `py-6 md:py-10` rhythm, full-bleed hero and brand strips, "Shop by Price" on the soft band. Side-banner rows use a narrower carousel (2 / 3 / 3 / 4 cards); category circles 3 / 5 / 7 / 10.
   - Promo tiles: curved colour shape with title + button; text colour picked automatically (black or white) for contrast with the chosen colour.
 - [x] Performance: the loader fetches sections + settings + the **first two product rows** on the server (header, hero and top rows server-rendered); later carousels load when within 600 px of the screen. **Added `@tanstack/react-router-ssr-query` (1.167.2, exact)** so server-loaded queries are sent with the page instead of being fetched again. This also fixes the same double-fetch for the header's settings / categories on every page. npm also moved `@tanstack/react-query` 5.101 → 5.104 (within the existing `^5.83` range).
-- [x] SEO: homepage title / description / canonical from Settings (meta title / description); Organization (name, url, logo, contact, address, social `sameAs`) + WebSite with SearchAction (`/shop?q=`) JSON-LD. The root's old hard-coded Organization block ("since 1968", "Lahore") was removed; the root's fallback title / description no longer mention departments the store doesn't have.
+- [x] SEO: homepage title / description / canonical from Settings (meta title / description); Organization (name, url, logo, contact, address, social `sameAs`) + WebSite with SearchAction (`/shop?q=`) JSON-LD. The root's old hard-coded Organization block was removed; the root's fallback title / description no longer mention departments the store doesn't have.
 - [x] Preview: `/?preview=1` for staff shows every section, with a label on the ones shoppers can't see (off / scheduled / ended). For everyone else it's the normal homepage.
 - [x] Checks: typecheck 0 errors; **130 tests pass** (new: `homepage-render.test.ts`, `homepage-phase4.test.mjs`); new files lint-clean; build passes. Built server against the **live** database (no new migrations): `/` renders the default layout on the server with real products and prices in New Arrivals and Books, category circles, price bar, promo tiles, JSON-LD and canonical; no server errors; `/shop`, category and product pages 200.
-  - The live `store_settings.meta_title` is still "Jahangir's Sons — A Complete Family Store, Lahore Since 1968": update it in Settings → SEO.
+  - The old live `store_settings.meta_title` is replaced by the rebrand migration `20260929100000_rebrand_schoolbooksexperts.sql`.
   - With the live data, Best Sellers has no products yet (no orders), so it disappears once loaded.
   - [!] Not checked in a browser (Chrome extension not connected): hydration, swipe, autoplay, visual spacing.
 
@@ -124,8 +124,8 @@ New packages: `@tanstack/react-router-ssr-query` 1.167.2, `@fontsource/dm-sans` 
 Every image needs alt text (the admin requires it). Until uploaded, placeholders in the store colours are shown.
 
 ## Settings the client must fill in
-- **Store Info:** real phone (live value is the placeholder `+92 300 0000000`), email, address, logo URL; confirm the store name (live: "Jahangir's Sons").
-- **SEO & Email:** meta title / description (live title still says "…A Complete Family Store, Lahore Since 1968").
+- **Store Info:** real phone (live value is the placeholder `+92 300 0000000`), email, address, logo URL (store name: SchoolBooksExperts, set by the rebrand migration).
+- **SEO & Email:** meta title / description (the rebrand migration sets new ones; adjust if you like).
 - **Header & Footer:** colour preset (Brand / Teal), announcement messages, phone hours, WhatsApp number / hours / pre-filled message, social links, app links (optional), newsletter text, "powered by" (optional), store pickup (keep off, see below).
 - **Netlify:** `SITE_URL` / `VITE_SITE_URL` (canonical links, sitemap, JSON-LD).
 - **Content:** FAQ page wording (still mentions Stripe / card payments), Returns / Terms / Privacy / About.

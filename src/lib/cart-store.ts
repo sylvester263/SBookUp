@@ -15,7 +15,9 @@ export type CartLine = {
   children?: string[];
 };
 
-const KEY = "jsn_cart_v1";
+const KEY = "sbe_cart_v1";
+// Carts saved under the pre-rebrand key are moved over once, so nobody loses theirs.
+const LEGACY_KEY = "jsn_cart_v1";
 export const CART_ADDED_EVENT = "cart:added";
 let state: CartLine[] = [];
 const listeners = new Set<() => void>();
@@ -23,6 +25,11 @@ const listeners = new Set<() => void>();
 function load(): CartLine[] {
   if (typeof window === "undefined") return [];
   try {
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    if (legacy !== null) {
+      if (localStorage.getItem(KEY) === null) localStorage.setItem(KEY, legacy);
+      localStorage.removeItem(LEGACY_KEY);
+    }
     return JSON.parse(localStorage.getItem(KEY) || "[]");
   } catch {
     return [];

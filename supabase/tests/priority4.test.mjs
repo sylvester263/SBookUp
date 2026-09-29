@@ -35,10 +35,11 @@ test("Priority 4: triggers run once, guest carts closed, order prefix setting", 
   const place = async () =>
     (await as(db, "authenticated", A, "select place_order($1::jsonb,$2::jsonb,'cod',null) as r", [JSON.stringify([{ product_id: P1, quantity: 1 }]), addr])).rows[0].r;
   const first = await place();
-  ok(/^JSN-\d{8}-\d{4}$/.test(first.order_number), `default prefix unchanged (${first.order_number})`);
-  await db.exec("update store_settings set order_number_prefix = 'SBE'");
+  // Default is SBE since the rebrand migration (20260929100000); it was JSN before.
+  ok(/^SBE-\d{8}-\d{4}$/.test(first.order_number), `default prefix is SBE (${first.order_number})`);
+  await db.exec("update store_settings set order_number_prefix = 'ABC'");
   const second = await place();
-  ok(/^SBE-\d{8}-\d{4}$/.test(second.order_number), `new prefix used for new orders (${second.order_number})`);
+  ok(/^ABC-\d{8}-\d{4}$/.test(second.order_number), `new prefix used for new orders (${second.order_number})`);
   ok((await one("select order_number from orders where id=$1", [first.order_id])).order_number === first.order_number, "existing order number not renamed");
   await throws(db.exec("update store_settings set order_number_prefix = 'bad prefix!'"), /check constraint/, "prefix format enforced");
 

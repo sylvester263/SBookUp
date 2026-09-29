@@ -196,9 +196,7 @@ export function SiteFooter() {
 
       <div className="border-t border-store-soft-foreground/10">
         <div className="container mx-auto flex flex-col items-center gap-1 px-4 py-4 text-center text-xs text-store-soft-foreground/80">
-          <p>
-            © {new Date().getFullYear()} {s.storeName} All Rights Reserved
-          </p>
+          <p>{s.copyright}</p>
           {s.poweredBy && (
             <p>
               {s.poweredBy.url ? (

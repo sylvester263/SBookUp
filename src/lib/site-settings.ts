@@ -35,6 +35,8 @@ export type SiteSettings = {
   newsletterHeading: string;
   newsletterText: string;
   poweredBy: { text: string; url: string | null } | null;
+  /** Footer copyright line */
+  copyright: string;
   pickup: { enabled: boolean; address: string | null };
 };
 
@@ -100,6 +102,7 @@ export function parseSiteSettings(raw: unknown): SiteSettings {
       "Get new arrivals, offers and back-to-school reminders in your inbox.",
     poweredBy: poweredText ? { text: poweredText, url: safeHref(r.powered_by_url) } : null,
     pickup: { enabled: r.pickup_enabled === true, address: str(r.pickup_address) },
+    copyright: str(r.footer_text) ?? `© 2026 ${storeName}. All Rights Reserved.`,
   };
 }
 

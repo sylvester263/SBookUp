@@ -16,6 +16,8 @@ import {
   adminUpsertShippingZone,
   adminDeleteShippingZone,
   adminUpdateStoreSettings,
+  adminGetPrivateSettings,
+  adminUpdatePrivateSettings,
 } from "@/lib/admin.functions";
 import { getStoreSettings } from "@/lib/site.functions";
 import { SiteChromeSettings } from "@/components/admin/SiteChromeSettings";
@@ -45,15 +47,20 @@ function emptyZone() {
 
 const STORE_DEFAULTS = {
   store_name: "SchoolBooksExperts",
-  contact_email: "info@schoolbooksexperts.com",
+  legal_name: "SchoolBooksExperts",
+  footer_text: "© 2026 SchoolBooksExperts. All Rights Reserved.",
+  invoice_header: "SchoolBooksExperts",
+  order_number_prefix: "SBE",
+  contact_email: "worldtimes07@gmail.com",
   contact_phone: "+92 300 0000000",
   address: "Lahore, Pakistan",
   currency: "PKR",
   tax_rate: 0,
-  meta_title: "SchoolBooksExperts — A Complete Family Store, Lahore Since 1968",
-  meta_description: "Shop books, stationery, uniforms, toys, baby items and party supplies.",
+  meta_title: "SchoolBooksExperts — Books, Stationery, Gifts, Toys & More in Pakistan",
+  meta_description:
+    "Shop books, stationery, gifts, toys & games, sports items and character costumes online at SchoolBooksExperts. Delivery across Pakistan.",
   sender_name: "SchoolBooksExperts",
-  sender_email: "orders@schoolbooksexperts.com",
+  sender_email: "",
   logo_url: "",
   bank_name: "",
   bank_account_title: "",
@@ -85,6 +92,10 @@ function SettingsPage() {
       const d = settingsQuery.data as any;
       setStore({
         store_name: d.store_name ?? STORE_DEFAULTS.store_name,
+        legal_name: d.legal_name ?? "",
+        footer_text: d.footer_text ?? "",
+        invoice_header: d.invoice_header ?? "",
+        order_number_prefix: d.order_number_prefix ?? STORE_DEFAULTS.order_number_prefix,
         contact_email: d.contact_email ?? "",
         contact_phone: d.contact_phone ?? "",
         address: d.address ?? "",
@@ -184,6 +195,19 @@ function SettingsPage() {
                 <Input value={store.store_name} onChange={(e) => setStore({ ...store, store_name: e.target.value })} />
               </div>
               <div>
+                <label className="text-sm font-medium">Legal Name</label>
+                <Input value={store.legal_name} onChange={(e) => setStore({ ...store, legal_name: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-sm font-medium">Order Number Prefix (new orders only)</label>
+                <Input
+                  value={store.order_number_prefix}
+                  onChange={(e) => setStore({ ...store, order_number_prefix: e.target.value.toUpperCase() })}
+                  maxLength={8}
+                />
+                <p className="text-xs text-muted-foreground mt-1">e.g. SBE → SBE-20260929-0001. Existing orders keep their numbers.</p>
+              </div>
+              <div>
                 <label className="text-sm font-medium">Currency</label>
                 <Input value={store.currency} onChange={(e) => setStore({ ...store, currency: e.target.value })} />
               </div>
@@ -202,6 +226,14 @@ function SettingsPage() {
               <div className="md:col-span-2">
                 <label className="text-sm font-medium">Logo URL (header, footer and emails; about 400×110 px, PNG or SVG)</label>
                 <Input value={store.logo_url} onChange={(e) => setStore({ ...store, logo_url: e.target.value })} placeholder="https://…/logo.png" />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium">Footer Copyright Text</label>
+                <Input value={store.footer_text} onChange={(e) => setStore({ ...store, footer_text: e.target.value })} placeholder="© 2026 SchoolBooksExperts. All Rights Reserved." />
+              </div>
+              <div className="md:col-span-2">
+                <label className="text-sm font-medium">Invoice Header (printed invoices)</label>
+                <Textarea value={store.invoice_header} onChange={(e) => setStore({ ...store, invoice_header: e.target.value })} rows={2} />
               </div>
               <div>
                 <label className="text-sm font-medium">Tax Rate (%)</label>
@@ -356,6 +388,7 @@ function SettingsPage() {
             </div>
             <Button onClick={saveStore} disabled={saving} className="bg-teal-600 hover:bg-teal-700">{saving ? "Saving..." : "Save Settings"}</Button>
           </div>
+          <PrivateSettingsCard />
         </TabsContent>
 
       </Tabs>
@@ -407,5 +440,71 @@ function SettingsPage() {
         </SheetContent>
       </Sheet>
     </AdminShell>
+  );
+}
+
+/** Admin-only: admin emails and notification recipients (store_private_settings). */
+function PrivateSettingsCard() {
+  const getFn = useServerFn(adminGetPrivateSettings);
+  const saveFn = useServerFn(adminUpdatePrivateSettings);
+  const q = useQuery({ queryKey: ["admin-private-settings"], queryFn: () => getFn() });
+  const [f, setF] = useState({ admin_emails: "", order_notification_email: "", contact_form_email: "", reply_to_email: "" });
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (q.data) {
+      setF({
+        admin_emails: (q.data.admin_emails ?? []).join("\n"),
+        order_notification_email: q.data.order_notification_email ?? "",
+        contact_form_email: q.data.contact_form_email ?? "",
+        reply_to_email: q.data.reply_to_email ?? "",
+      });
+    }
+  }, [q.data]);
+
+  async function save() {
+    setSaving(true);
+    try {
+      const admin_emails = f.admin_emails.split(/[\s,;]+/).map((e) => e.trim().toLowerCase()).filter(Boolean);
+      const r = await saveFn({ data: { ...f, admin_emails } });
+      q.refetch();
+      toast.success(r.granted ? `Saved — ${r.granted} account(s) given admin access` : "Notification settings saved");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const field = (key: "order_notification_email" | "contact_form_email" | "reply_to_email", label: string) => (
+    <div>
+      <label className="text-sm font-medium">{label}</label>
+      <Input type="email" value={f[key]} onChange={(e) => setF({ ...f, [key]: e.target.value })} />
+    </div>
+  );
+
+  return (
+    <div className="bg-white rounded-xl border p-6 max-w-2xl space-y-4 mt-4">
+      <div>
+        <h3 className="font-semibold">Notifications &amp; admin access</h3>
+        <p className="text-sm text-muted-foreground">Private: only admins can see these. Empty fields fall back to the store contact email.</p>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {field("order_notification_email", "New order alerts to")}
+        {field("contact_form_email", "Contact form messages to")}
+        {field("reply_to_email", "Reply-to on customer emails")}
+      </div>
+      <div>
+        <label className="text-sm font-medium">Admin emails (one per line)</label>
+        <Textarea value={f.admin_emails} onChange={(e) => setF({ ...f, admin_emails: e.target.value })} rows={3} />
+        <p className="text-xs text-muted-foreground mt-1">
+          An account with one of these emails gets admin access once its email is verified (Google sign-in or the
+          confirmation link). Removing an email here does not remove anyone's access.
+        </p>
+      </div>
+      <Button onClick={save} disabled={saving || q.isLoading} className="bg-teal-600 hover:bg-teal-700">
+        {saving ? "Saving..." : "Save Notification Settings"}
+      </Button>
+    </div>
   );
 }

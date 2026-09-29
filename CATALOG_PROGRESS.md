@@ -173,7 +173,7 @@ With no existing categories there is nothing to remap, so **no mapping migration
 - (B) Sales count window: **default 90 days**; bundle contents count as sales of each item.
 - (D) Pricing Bar: **default** = a strip of price-band buttons on the homepage (editable in Settings → Homepage) linking to `/shop?min=&max=`, while every listing page also has the price slider. Say if you want a slider on the homepage instead.
 - (D) New Arrivals section = flagged-and-not-expired products **plus** anything added in the last 30 days (flagged ones first); Recently Added = newest by date added.
-- (D) The top announcement bar still says "Serving Lahore Families Since 1968 • Free delivery on orders above PKR 2,000" (hard-coded; free delivery isn't set up). Waiting on the store-details answer from audit task 4.3 before changing it.
+- (D) ~~Hard-coded announcement bar text~~ Resolved: the announcement bar comes from Settings, and the old wording is replaced by the rebrand migration `20260929100000_rebrand_schoolbooksexperts.sql`.
 - (D) Product price filter / sort use the product's price (sale price if lower). For costumes whose variants have different prices, the card shows the variant price range, but the price filter matches on the product price.
 - (E) `VITE_SITE_URL`: set it to the live URL (same value as `SITE_URL`) so canonicals and JSON-LD are absolute. **Default:** without it they are root-relative, which search engines accept.
 - (E) Filtered listings are **canonicalised** to the category page, not `noindex`ed. Say if you'd rather have `noindex, follow` on filtered views.
@@ -198,7 +198,7 @@ Then regenerate the types: `npx supabase gen types typescript --project-id <id> 
 ## Blocked / waiting on you
 1. ~~Apply all 15 migrations~~ **Done 2026-09-24**: all 15 applied in filename order through the session pooler (`aws-1-ap-northeast-2.pooler.supabase.com`; the direct `db.<ref>.supabase.co` host is IPv6-only). Verified: `quote_order`, `cart_lines`, `cancel_my_order`, `catalog_search` exist; `decrement_order_stock` is dropped; 12 categories and 12 attribute definitions are seeded; anon can no longer read `cost_price`. All 29 versions are recorded in `supabase_migrations.schema_migrations`. Types regenerated from the live project (`supabase gen types`); typecheck 0 errors, 78 tests pass.
 2. **Create the first admin**: sign up on the site, then in the SQL editor run `insert into user_roles(user_id, role) select id, 'admin' from auth.users where email = '<your email>';`
-3. **Store name**: `store_settings.store_name` on the live project is "Jahangir's Sons" (also the meta title, email sender and address), while the code and page titles use "SchoolBooksExperts". Which name should the store show? The page `<title>` suffix and JSON-LD currently say SchoolBooksExperts.
+3. **Store name**: resolved — SchoolBooksExperts everywhere (the old name in `store_settings` is replaced by the rebrand migration `20260929100000_rebrand_schoolbooksexperts.sql`).
 4. The open questions above; every one has a working default that can be changed from admin or with a one-line change.
 
 ## Client demo checklist

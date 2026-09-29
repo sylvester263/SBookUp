@@ -29,8 +29,11 @@ export const submitContactMessage = createServerFn({ method: "POST" })
       message: data.message,
     });
     if (error) throw new Error(error.message);
-    const { notifyContactAutoReply } = await import("@/lib/email/notify.server");
-    await notifyContactAutoReply(data.email, data.name, data.subject || null);
+    const { notifyContactAutoReply, notifyContactReceived } = await import("@/lib/email/notify.server");
+    await Promise.all([
+      notifyContactAutoReply(data.email, data.name, data.subject || null),
+      notifyContactReceived({ name: data.name, email: data.email, phone: data.phone || null, subject: data.subject || null, message: data.message }),
+    ]);
     return { ok: true };
   });
 
@@ -270,15 +273,20 @@ export const getStoreSettings = createServerFn({ method: "GET" }).handler(async 
     data ?? {
       id: true,
       store_name: "SchoolBooksExperts",
-      contact_email: "info@schoolbooksexperts.com",
+      contact_email: "worldtimes07@gmail.com",
       contact_phone: "+92 300 0000000",
       address: "Lahore, Pakistan",
       currency: "PKR",
       tax_rate: 0,
-      meta_title: "SchoolBooksExperts — A Complete Family Store, Lahore Since 1968",
-      meta_description: "Shop books, stationery, uniforms, toys, baby items and party supplies.",
+      meta_title: "SchoolBooksExperts — Books, Stationery, Gifts, Toys & More in Pakistan",
+      meta_description:
+        "Shop books, stationery, gifts, toys & games, sports items and character costumes online at SchoolBooksExperts. Delivery across Pakistan.",
       sender_name: "SchoolBooksExperts",
-      sender_email: "orders@schoolbooksexperts.com",
+      sender_email: null,
+      legal_name: "SchoolBooksExperts",
+      footer_text: "© 2026 SchoolBooksExperts. All Rights Reserved.",
+      invoice_header: "SchoolBooksExperts",
+      order_number_prefix: "SBE",
       school_features_enabled: false,
     }
   );

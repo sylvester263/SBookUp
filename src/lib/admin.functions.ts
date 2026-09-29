@@ -1094,6 +1094,11 @@ export const adminModerateReview = createServerFn({ method: "POST" })
 // ---------- store settings ----------
 const storeSettingsSchema = z.object({
   store_name: z.string().trim().min(1).max(120),
+  legal_name: z.string().trim().max(160).optional().or(z.literal("")),
+  footer_text: z.string().trim().max(200).optional().or(z.literal("")),
+  invoice_header: z.string().trim().max(300).optional().or(z.literal("")),
+  // New orders only; existing order numbers never change
+  order_number_prefix: z.string().trim().regex(/^[A-Z0-9]{1,8}$/, "Order prefix: 1–8 capital letters or digits").optional(),
   contact_email: z.string().trim().email().max(255).optional().or(z.literal("")),
   contact_phone: z.string().trim().max(40).optional().or(z.literal("")),
   address: z.string().trim().max(500).optional().or(z.literal("")),
@@ -1124,6 +1129,9 @@ export const adminUpdateStoreSettings = createServerFn({ method: "POST" })
     await assertAdmin(supabase, userId);
     const patch = {
       ...data,
+      legal_name: data.legal_name || null,
+      footer_text: data.footer_text || null,
+      invoice_header: data.invoice_header || null,
       contact_email: data.contact_email || null,
       contact_phone: data.contact_phone || null,
       address: data.address || null,
@@ -1148,6 +1156,54 @@ export const adminUpdateStoreSettings = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await logActivity(supabase, userId, "store_settings_update", "settings", null, patch, null);
     return { ok: true, settings: row };
+  });
+
+// ---------- private settings (admin emails, notification recipients) ----------
+// Kept in store_private_settings, which only admins can read (store_settings
+// is public). Accounts with an email in admin_emails get the admin role once
+// the email is verified (database trigger); nobody is ever demoted here.
+const emailOrEmpty = z.string().trim().email().max(255).optional().or(z.literal(""));
+const privateSettingsSchema = z.object({
+  admin_emails: z.array(z.string().trim().toLowerCase().email().max(255)).max(20),
+  order_notification_email: emailOrEmpty,
+  contact_form_email: emailOrEmpty,
+  reply_to_email: emailOrEmpty,
+});
+
+export const adminGetPrivateSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const { data, error } = await supabase
+      .from("store_private_settings")
+      .select("admin_emails, order_notification_email, contact_form_email, reply_to_email")
+      .eq("id", true)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ?? { admin_emails: [], order_notification_email: null, contact_form_email: null, reply_to_email: null };
+  });
+
+export const adminUpdatePrivateSettings = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => privateSettingsSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertAdmin(supabase, userId);
+    const patch = {
+      admin_emails: data.admin_emails,
+      order_notification_email: data.order_notification_email || null,
+      contact_form_email: data.contact_form_email || null,
+      reply_to_email: data.reply_to_email || null,
+    };
+    const { error } = await supabase.from("store_private_settings").upsert({ id: true, ...patch }, { onConflict: "id" });
+    if (error) throw new Error(error.message);
+    // Existing, verified accounts with a newly listed email become admin now.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: granted, error: grantError } = await supabaseAdmin.rpc("grant_configured_admin_roles");
+    if (grantError) throw new Error(grantError.message);
+    await logActivity(supabase, userId, "private_settings_update", "settings", null, patch, null);
+    return { ok: true, granted: Number(granted ?? 0) };
   });
 
 // ---------- payment proof (bank transfer) ----------

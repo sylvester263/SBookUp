@@ -63,7 +63,7 @@ function TrackPage() {
         <form onSubmit={lookup} className="bg-white border border-border rounded-xl p-6 space-y-3">
           <div>
             <label className="text-sm font-medium text-brand-navy">Order number</label>
-            <Input value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} placeholder="JSN-20260601-0001" required />
+            <Input value={orderNumber} onChange={(e) => setOrderNumber(e.target.value)} placeholder="SBE-20260601-0001" required />
           </div>
           <div>
             <label className="text-sm font-medium text-brand-navy">Email</label>

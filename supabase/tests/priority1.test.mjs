@@ -77,7 +77,7 @@ await throws(as(db, "authenticated", A, "select _compute_order($1::jsonb,'Lahore
 ok(await count("select count(*)::int n from orders") === 0, "failed attempts left no orders behind");
 
 const r = (await as(db, "authenticated", A, "select place_order($1::jsonb,$2::jsonb,'cod','tenoff','leave at gate') as r", [items, addr])).rows[0].r;
-ok(/^JSN-\d{8}-\d{4}$/.test(r.order_number), `order number ${r.order_number}`);
+ok(/^SBE-\d{8}-\d{4}$/.test(r.order_number), `order number ${r.order_number}`);
 const o = (await db.query("select * from orders where id=$1", [r.order_id])).rows[0];
 ok(o.subtotal == 2900 && o.discount_amount == 290 && o.total == 3421 && o.status === "pending" && o.payment_status === "pending" && o.user_id === A, `order saved with server totals (total ${o.total})`);
 ok(await count("select count(*)::int n from order_items where order_id=$1", [r.order_id]) === 2, "order items saved in the same transaction");

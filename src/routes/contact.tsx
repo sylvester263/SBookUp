@@ -17,7 +17,7 @@ export const Route = createFileRoute("/contact")({
       { title: "Contact Us — SchoolBooksExperts" },
       { name: "description", content: "Get in touch with SchoolBooksExperts in Urdu Bazaar, Lahore. Phone, WhatsApp, email and store hours." },
       { property: "og:title", content: "Contact SchoolBooksExperts" },
-      { property: "og:description", content: "Reach our family store in Urdu Bazaar, Lahore." },
+      { property: "og:description", content: "Questions about books, stationery, gifts, toys or an order? Get in touch." },
       { property: "og:url", content: "/contact" },
     ],
     links: [{ rel: "canonical", href: "/contact" }],
@@ -38,7 +38,7 @@ function ContactPage() {
   const settingsFn = useServerFn(getStoreSettings);
   const settingsQuery = useQuery({ queryKey: ["store-settings"], queryFn: () => settingsFn() });
   const settings: any = settingsQuery.data ?? {};
-  const contactEmail = settings.contact_email || "hello@schoolbooksexperts.com";
+  const contactEmail = settings.contact_email || "worldtimes07@gmail.com";
   const contactPhone = settings.contact_phone || "+92 300 0000000";
   const phoneDigits = (contactPhone || "").replace(/[^\d]/g, "");
   const address = settings.address || "Urdu Bazaar, Lahore, Pakistan";

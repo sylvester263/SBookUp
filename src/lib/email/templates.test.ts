@@ -9,7 +9,7 @@ describe("email templates", () => {
 
   it("renders order totals including discount and tax", () => {
     const html = orderTable({
-      order_number: "JSN-1", status: "pending", payment_method: "cod", payment_status: "pending",
+      order_number: "SBE-1", status: "pending", payment_method: "cod", payment_status: "pending",
       subtotal: 2900, discount_amount: 290, shipping_cost: 550, tax_amount: 261, total: 3421,
       coupon_code: "TENOFF", shipping_address: null,
       items: [{ name_snapshot: "Maths <5>", quantity: 2, subtotal: 1600 }],

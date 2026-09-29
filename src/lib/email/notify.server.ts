@@ -8,17 +8,39 @@ import {
   type OrderForEmail, type StoreBrand,
 } from "./templates.server";
 
-async function brand(): Promise<StoreBrand & { store_email: string | null; bank: Record<string, string | null> }> {
-  const { data } = await supabaseAdmin.from("store_settings").select("*").eq("id", true).maybeSingle();
+type Brand = StoreBrand & {
+  /** New-order alerts */
+  store_email: string | null;
+  /** Contact-form messages */
+  contact_form_email: string | null;
+  /** Reply-to on customer emails */
+  reply_to: string | undefined;
+  bank: Record<string, string | null>;
+};
+
+async function brand(): Promise<Brand> {
+  const [{ data }, { data: priv }] = await Promise.all([
+    supabaseAdmin.from("store_settings").select("*").eq("id", true).maybeSingle(),
+    // Admin-only recipients (admin → Settings → Notifications). Missing before
+    // the rebrand migration is applied; then the fallbacks below are used.
+    supabaseAdmin
+      .from("store_private_settings")
+      .select("order_notification_email, contact_form_email, reply_to_email")
+      .eq("id", true)
+      .maybeSingle(),
+  ]);
   const s = (data ?? {}) as Record<string, any>;
+  const p = (priv ?? {}) as Record<string, string | null>;
   return {
     store_name: s.store_name || "SchoolBooksExperts",
     logo_url: s.logo_url,
     contact_email: s.contact_email,
     contact_phone: s.contact_phone,
     address: s.address,
-    // New-order alerts go to STORE_ALERT_EMAIL, else the store contact email.
-    store_email: process.env.STORE_ALERT_EMAIL || s.contact_email || null,
+    // Setting first, then the STORE_ALERT_EMAIL env var, then the contact email.
+    store_email: p.order_notification_email || process.env.STORE_ALERT_EMAIL || s.contact_email || null,
+    contact_form_email: p.contact_form_email || s.contact_email || null,
+    reply_to: p.reply_to_email || s.contact_email || undefined,
     bank: {
       bank_name: s.bank_name, bank_account_title: s.bank_account_title,
       bank_account_number: s.bank_account_number, bank_iban: s.bank_iban, bank_instructions: s.bank_instructions,
@@ -73,7 +95,7 @@ export async function notifyOrderPlaced(orderId: string) {
 ${orderTable(order)}${addressBlock(order)}
 ${isBank ? bankDetailsHtml(b.bank, order.order_number) + (url ? `<p style="font-size:14px">After paying, upload your payment screenshot here:</p>${button(`${url}/checkout/success/${encodeURIComponent(order.order_number)}`, "Upload payment proof")}` : "") : ""}
 ${url ? button(`${url}/account/orders`, "View my orders") : ""}`;
-      jobs.push(sendEmail({ to: email, subject: `Order ${order.order_number} received — ${b.store_name}`, html: layout(b, "Order received", body), replyTo: b.contact_email ?? undefined }));
+      jobs.push(sendEmail({ to: email, subject: `Order ${order.order_number} received — ${b.store_name}`, html: layout(b, "Order received", body), replyTo: b.reply_to }));
     }
     if (b.store_email) {
       const body = `<p>A new order was placed.</p>
@@ -108,9 +130,30 @@ export async function notifyOrderStatus(orderId: string, status: string) {
       ? `<p style="font-size:14px">Tracking number: <strong>${esc(order.tracking_number)}</strong></p>` : "";
     const body = `<p>${copy.text}</p><p style="font-size:14px">Order <strong>${esc(order.order_number)}</strong></p>${tracking}
 ${orderTable(order)}${url ? button(`${url}/track`, "Track your order") : ""}`;
-    await sendEmail({ to: loaded.email, subject: `${copy.title} — ${order.order_number}`, html: layout(b, copy.title, body), replyTo: b.contact_email ?? undefined });
+    await sendEmail({ to: loaded.email, subject: `${copy.title} — ${order.order_number}`, html: layout(b, copy.title, body), replyTo: b.reply_to });
   } catch (e) {
     console.error("[notify] status failed", e);
+  }
+}
+
+/** Contact-form message forwarded to the store (reply-to = the customer). */
+export async function notifyContactReceived(msg: { name: string; email: string; phone: string | null; subject: string | null; message: string }) {
+  try {
+    const b = await brand();
+    if (!b.contact_form_email) return;
+    const url = siteUrl();
+    const body = `<p>New message from the contact form.</p>
+<p style="font-size:14px">From: <strong>${esc(msg.name)}</strong> &lt;${esc(msg.email)}&gt;${msg.phone ? `<br>Phone: ${esc(msg.phone)}` : ""}${msg.subject ? `<br>Subject: ${esc(msg.subject)}` : ""}</p>
+${textToHtml(msg.message)}${url ? button(`${url}/admin/messages`, "Open in admin") : ""}`;
+    await sendEmail({
+      to: b.contact_form_email,
+      subject: `Contact form: ${msg.subject || msg.name}`,
+      html: layout(b, "New contact message", body),
+      text: msg.message,
+      replyTo: msg.email,
+    });
+  } catch (e) {
+    console.error("[notify] contact message alert failed", e);
   }
 }
 
@@ -118,7 +161,7 @@ export async function notifyContactAutoReply(to: string, name: string, subject: 
   try {
     const b = await brand();
     const body = `<p>Hi ${esc(name)},</p><p>Thanks for contacting ${esc(b.store_name)}. We've received your message${subject ? ` about “${esc(subject)}”` : ""} and will reply as soon as possible, usually within one working day.</p>`;
-    await sendEmail({ to, subject: `We received your message — ${b.store_name}`, html: layout(b, "Thanks for your message", body), replyTo: b.contact_email ?? undefined });
+    await sendEmail({ to, subject: `We received your message — ${b.store_name}`, html: layout(b, "Thanks for your message", body), replyTo: b.reply_to });
   } catch (e) {
     console.error("[notify] contact auto-reply failed", e);
   }
@@ -133,7 +176,7 @@ export async function sendContactReply(to: string, name: string, originalSubject
     subject: originalSubject ? `Re: ${originalSubject}` : `Reply from ${b.store_name}`,
     html: layout(b, `Reply from ${b.store_name}`, body),
     text: replyText,
-    replyTo: b.contact_email ?? undefined,
+    replyTo: b.reply_to,
   });
 }
 
@@ -142,7 +185,7 @@ export async function sendReminderEmail(to: string, message: string, type: strin
   const url = siteUrl();
   const title = type ? type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Reminder";
   const body = `${textToHtml(message || "A friendly reminder from us.")}${url ? button(url, `Shop at ${b.store_name}`) : ""}`;
-  return sendEmail({ to, subject: `${title} — ${b.store_name}`, html: layout(b, title, body) });
+  return sendEmail({ to, subject: `${title} — ${b.store_name}`, html: layout(b, title, body), replyTo: b.reply_to });
 }
 
 /** Newsletter campaign to active subscribers, each with their own unsubscribe link. */
@@ -157,6 +200,7 @@ export async function sendNewsletterCampaign(subject: string, text: string, reci
       subject,
       html: layout(b, subject, textToHtml(text), footer),
       text: unsub ? `${text}\n\nUnsubscribe: ${unsub}` : text,
+      replyTo: b.reply_to,
       headers: unsub ? { "List-Unsubscribe": `<${unsub}>` } : undefined,
     };
   });

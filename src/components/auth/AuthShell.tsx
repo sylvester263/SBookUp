@@ -9,7 +9,7 @@ export function AuthShell({ title, subtitle, children, footer }: {
       <div className="container mx-auto px-4 py-6">
         <Link to="/" className="inline-block">
           <div className="font-display text-2xl text-brand-teal font-bold">SchoolBooksExperts</div>
-          <div className="text-[10px] text-muted-foreground tracking-widest uppercase">A Complete Family Store</div>
+          <div className="text-[10px] text-muted-foreground tracking-widest uppercase">Books · Stationery · Gifts · Toys</div>
         </Link>
       </div>
       <div className="flex-1 flex items-start md:items-center justify-center px-4 py-8">

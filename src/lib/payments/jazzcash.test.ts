@@ -5,7 +5,7 @@ import { jazzcash, jazzcashResponseHash } from "./jazzcash.server";
 const SALT = "test_salt_123";
 const base = {
   pp_Amount: "150000",
-  pp_BillReference: "JSN-20260923-0001",
+  pp_BillReference: "SBE-20260923-0001",
   pp_MerchantID: "MC12345",
   pp_ResponseCode: "000",
   pp_ResponseMessage: "Thank you",
@@ -28,13 +28,13 @@ describe("JazzCash callback verification", () => {
   });
 
   it("hash = HMAC-SHA256(salt, salt & sorted non-empty pp_ values), upper-case", () => {
-    const msg = [SALT, "150000", "JSN-20260923-0001", "MC12345", "000", "Thank you", "T20260923120000"].join("&");
+    const msg = [SALT, "150000", "SBE-20260923-0001", "MC12345", "000", "Thank you", "T20260923120000"].join("&");
     expect(jazzcashResponseHash(base, SALT)).toBe(createHmac("sha256", SALT).update(msg).digest("hex").toUpperCase());
   });
 
   it("accepts a correctly signed success and converts paisa to PKR", async () => {
     const r = await jazzcash.verifyCallback(sign(base));
-    expect(r).toMatchObject({ valid: true, paid: true, orderNumber: "JSN-20260923-0001", amount: 1500, reference: "T20260923120000" });
+    expect(r).toMatchObject({ valid: true, paid: true, orderNumber: "SBE-20260923-0001", amount: 1500, reference: "T20260923120000" });
   });
 
   it("rejects a tampered amount", async () => {

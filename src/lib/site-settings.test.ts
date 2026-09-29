@@ -22,11 +22,12 @@ describe("parseSiteSettings", () => {
     expect(s.appStoreUrl).toBeNull();
     expect(s.poweredBy).toBeNull();
     expect(s.pickup.enabled).toBe(false);
+    expect(s.copyright).toBe("© 2026 SchoolBooksExperts. All Rights Reserved.");
   });
 
   test("reads the admin settings and drops unsafe links", () => {
     const s = parseSiteSettings({
-      store_name: "Jahangir's Sons",
+      store_name: "Acme Books",
       theme_preset: "teal",
       announcement_interval_seconds: 1,
       announcements: [
@@ -51,10 +52,12 @@ describe("parseSiteSettings", () => {
     ]);
     expect(s.announcementInterval).toBe(2);
     expect(s.whatsapp.number).toBe("923001234567");
-    expect(s.whatsapp.message).toContain("Jahangir's Sons");
+    expect(s.whatsapp.message).toContain("Acme Books");
     expect(s.social).toEqual({ facebook: "https://facebook.com/x" });
     expect(s.appStoreUrl).toBe("https://apps.apple.com/x");
     expect(s.poweredBy).toEqual({ text: "Powered by Acme", url: null });
+    expect(s.copyright).toBe("© 2026 Acme Books. All Rights Reserved.");
+    expect(parseSiteSettings({ footer_text: " © Custom line " }).copyright).toBe("© Custom line");
   });
 
   test("link helpers", () => {

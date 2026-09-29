@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { AdminShell } from "@/components/admin/AdminShell";
 import { Pager, useDebounced } from "@/components/admin/Pager";
 import { adminListOrders, adminGetOrder, adminUpdateOrder, adminGetPaymentProofUrl } from "@/lib/admin.functions";
+import { storeSettingsQueryOptions } from "@/lib/feature-flags";
 
 export const Route = createFileRoute("/_admin/admin/orders")({
   component: OrdersPage,
@@ -128,6 +129,7 @@ function OrderDetail({ id, onClose }: { id: string; onClose: () => void }) {
   const getFn = useServerFn(adminGetOrder);
   const updFn = useServerFn(adminUpdateOrder);
   const { data: o, isLoading } = useQuery({ queryKey: ["admin-order", id], queryFn: () => getFn({ data: { id } }) });
+  const { data: settings } = useQuery(storeSettingsQueryOptions);
 
   const [status, setStatus] = useState("");
   const [payStatus, setPayStatus] = useState("");
@@ -156,6 +158,15 @@ function OrderDetail({ id, onClose }: { id: string; onClose: () => void }) {
         <SheetTitle>Order {o.order_number}</SheetTitle>
       </SheetHeader>
       <div className="space-y-5 mt-4">
+        {/* Printed invoices only: header from Settings → Store Info */}
+        <div className="hidden print:block text-sm">
+          <div className="whitespace-pre-line font-bold text-base">
+            {settings?.invoice_header || settings?.store_name || "SchoolBooksExperts"}
+          </div>
+          <div className="text-xs">
+            {[settings?.contact_phone, settings?.contact_email, settings?.address].filter(Boolean).join(" · ")}
+          </div>
+        </div>
         <div className="flex items-center justify-between">
           <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${STATUS_COLOR[o.status] ?? "bg-slate-100"}`}>{o.status}</span>
           <Button variant="outline" size="sm" onClick={() => window.print()}><Printer className="h-3.5 w-3.5 mr-1" /> Print invoice</Button>
