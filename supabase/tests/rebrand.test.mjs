@@ -149,3 +149,19 @@ test("Rebrand: settings, homepage text, private settings, admin email", async ()
   // Existing admin untouched
   ok((await roles(OLD_ADMIN)).includes("admin"), "existing admin kept");
 });
+
+// The live project was missing the 2026-09-28 migrations when this was first
+// run: the rebrand migration must still work on its own, and the later
+// migrations must still apply after it.
+test("Rebrand: runs before the 2026-09-28 migrations too", async () => {
+  const dir = path.join(REPO, "supabase/migrations");
+  const db = await makeDb({ upTo: "20260927100000_catalog_storefront.sql" });
+  await db.exec(fs.readFileSync(path.join(dir, "20260929100000_rebrand_schoolbooksexperts.sql"), "utf8"));
+  const s = (await db.query("select store_name, order_number_prefix, footer_text from store_settings")).rows[0];
+  ok(s.store_name === "SchoolBooksExperts" && s.order_number_prefix === "SBE", `settings rebranded (${JSON.stringify(s)})`);
+  for (const f of fs.readdirSync(dir).filter((x) => x > "20260927100000_catalog_storefront.sql" && x.endsWith(".sql")).sort()) {
+    await db.exec(fs.readFileSync(path.join(dir, f), "utf8"));
+  }
+  const a = (await db.query("select announcements from store_settings")).rows[0].announcements;
+  ok(a[0]?.text === "Welcome to SchoolBooksExperts", `later migrations start from the new name (${JSON.stringify(a)})`);
+});

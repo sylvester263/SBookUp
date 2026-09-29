@@ -65,33 +65,52 @@ begin
 end;
 $$;
 
--- Announcement bar / WhatsApp / newsletter / bank text: swap the old store name
--- and drop "since 1968" wording wherever it appears.
+-- Bank text: swap the old store name.
 update public.store_settings set
-  announcements = (
-    select coalesce(jsonb_agg(
-      case when a->>'text' ~* 'jahangir|1968'
-        then jsonb_set(a, '{text}', to_jsonb('Welcome to SchoolBooksExperts — books, stationery, gifts, toys and more'::text))
-        else a end order by ord), '[]'::jsonb)
-    from jsonb_array_elements(announcements) with ordinality as t(a, ord)
-  )
-where id = true and announcements::text ~* 'jahangir|1968';
-
-update public.store_settings set
-  whatsapp_message   = regexp_replace(whatsapp_message, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
-  newsletter_heading = regexp_replace(newsletter_heading, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
-  newsletter_text    = regexp_replace(newsletter_text, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
-  powered_by_text    = regexp_replace(powered_by_text, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
   bank_account_title = regexp_replace(bank_account_title, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
   bank_instructions  = regexp_replace(bank_instructions, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi')
 where id = true;
 
--- ---------- 2. homepage sections / banners ----------
-update public.homepage_sections set
-  title    = regexp_replace(title, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
-  subtitle = regexp_replace(subtitle, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
-  config   = regexp_replace(config::text, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi')::jsonb
-where coalesce(title, '') || coalesce(subtitle, '') || config::text ~* 'Jahangir[’'']?s?\s+Sons';
+-- Announcement bar / WhatsApp / newsletter text (columns from the 2026-09-28
+-- header/footer migration) and homepage sections. Skipped when those aren't
+-- applied yet: they then start from the new store name anyway.
+do $do$
+begin
+  if exists (select 1 from information_schema.columns
+              where table_schema = 'public' and table_name = 'store_settings' and column_name = 'announcements') then
+    execute $sql$
+      update public.store_settings set
+        announcements = (
+          select coalesce(jsonb_agg(
+            case when a->>'text' ~* 'jahangir|1968'
+              then jsonb_set(a, '{text}', to_jsonb('Welcome to SchoolBooksExperts — books, stationery, gifts, toys and more'::text))
+              else a end order by ord), '[]'::jsonb)
+          from jsonb_array_elements(announcements) with ordinality as t(a, ord)
+        )
+      where id = true and announcements::text ~* 'jahangir|1968'
+    $sql$;
+    execute $sql$
+      update public.store_settings set
+        whatsapp_message   = regexp_replace(whatsapp_message, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
+        newsletter_heading = regexp_replace(newsletter_heading, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
+        newsletter_text    = regexp_replace(newsletter_text, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
+        powered_by_text    = regexp_replace(powered_by_text, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi')
+      where id = true
+    $sql$;
+  end if;
+
+  -- ---------- 2. homepage sections / banners ----------
+  if to_regclass('public.homepage_sections') is not null then
+    execute $sql$
+      update public.homepage_sections set
+        title    = regexp_replace(title, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
+        subtitle = regexp_replace(subtitle, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
+        config   = regexp_replace(config::text, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi')::jsonb
+      where coalesce(title, '') || coalesce(subtitle, '') || config::text ~* 'Jahangir[’'']?s?\s+Sons'
+    $sql$;
+  end if;
+end
+$do$;
 
 update public.banners set
   title    = regexp_replace(title, 'Jahangir[’'']?s?\s+Sons', 'SchoolBooksExperts', 'gi'),
