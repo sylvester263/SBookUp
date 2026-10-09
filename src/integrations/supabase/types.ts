@@ -1676,6 +1676,16 @@ export type Database = {
         Args: { _product_id: string };
         Returns: boolean;
       };
+      import_lookup_products: { Args: { p: Json }; Returns: Json };
+      import_lookup_variants: { Args: { p: Json }; Returns: Json };
+      import_products_batch: {
+        Args: { p_new_options?: Json; p_rows: Json };
+        Returns: Json;
+      };
+      import_variants_batch: {
+        Args: { p_new_options?: Json; p_rows: Json };
+        Returns: Json;
+      };
       place_order: {
         Args: {
           p_coupon_code?: string;

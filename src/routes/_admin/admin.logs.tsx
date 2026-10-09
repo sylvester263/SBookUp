@@ -8,7 +8,12 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { adminListActivityLogs, adminActivityLogFilters } from "@/lib/admin.functions";
 import { Pager } from "@/components/admin/Pager";
 
-export const Route = createFileRoute("/_admin/admin/logs")({ component: LogsPage });
+export const Route = createFileRoute("/_admin/admin/logs")({
+  component: LogsPage,
+  // ?entity=product_import opens the log filtered (linked from the bulk import summary).
+  validateSearch: (s: Record<string, unknown>): { entity?: string } =>
+    typeof s.entity === "string" && /^[a-z_]{1,60}$/.test(s.entity) ? { entity: s.entity } : {},
+});
 
 function actionColor(a: string) {
   if (a.startsWith("delete") || a.startsWith("bulk_delete")) return "text-destructive bg-red-50";
@@ -21,7 +26,8 @@ function LogsPage() {
   const fn = useServerFn(adminListActivityLogs);
   const filtersFn = useServerFn(adminActivityLogFilters);
   const [admin, setAdmin] = useState<string>("all");
-  const [entity, setEntity] = useState<string>("all");
+  const search = Route.useSearch();
+  const [entity, setEntity] = useState<string>(search.entity ?? "all");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [page, setPage] = useState(1);

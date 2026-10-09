@@ -304,7 +304,7 @@ function ProductDetailPage() {
               <TabsTrigger value="shipping" className="text-sm px-4 py-3">Shipping</TabsTrigger>
             </TabsList>
             <TabsContent value="desc" className="bg-white border border-border rounded-xl p-4 md:p-6 mt-4 prose max-w-none text-sm md:text-base">
-              {p.description ? <div dangerouslySetInnerHTML={{ __html: DOMPurify.isSupported ? DOMPurify.sanitize(p.description) : p.description }} /> : <p className="text-muted-foreground">No description available.</p>}
+              {p.description ? <ProductDescription html={p.description} /> : <p className="text-muted-foreground">No description available.</p>}
             </TabsContent>
             <TabsContent value="details" className="bg-white border border-border rounded-xl p-4 md:p-6 mt-4">
               <table className="w-full text-sm">
@@ -364,6 +364,20 @@ function ProductDetailPage() {
       )}
     </SiteShell>
   );
+}
+
+/**
+ * Description HTML (it can come from the bulk importer). DOMPurify needs a DOM, so
+ * the server render shows the plain text only; the sanitised HTML replaces it in
+ * the browser. Unsanitised HTML is never rendered.
+ */
+function ProductDescription({ html }: { html: string }) {
+  const [safe, setSafe] = useState<string | null>(null);
+  useEffect(() => {
+    if (DOMPurify.isSupported) setSafe(DOMPurify.sanitize(html));
+  }, [html]);
+  if (safe == null) return <p className="whitespace-pre-line">{plainText(html, 100_000)}</p>;
+  return <div dangerouslySetInnerHTML={{ __html: safe }} />;
 }
 
 function Gallery({ images, alt, sale }: { images: string[]; alt: string; sale?: boolean }) {

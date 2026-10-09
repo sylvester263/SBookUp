@@ -17,11 +17,11 @@ import { AdminShell } from "@/components/admin/AdminShell";
 import { Pager, useDebounced } from "@/components/admin/Pager";
 import {
   adminListProducts, adminUpsertProduct, adminDeleteProduct, adminBulkProducts,
-  adminListCategories, adminGetUploadUrl, adminBulkUpsertProducts, adminExportProducts,
+  adminListCategories, adminGetUploadUrl,
   adminListVariants, adminUpsertVariant, adminDeleteVariant,
 } from "@/lib/admin.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { CatalogImportModal } from "@/components/admin/CatalogImportModal";
+import { BulkImportDialog } from "@/components/admin/import/BulkImportDialog";
 import { useCatalog, flattenTree } from "@/components/admin/catalog-shared";
 import { ProductForm } from "@/components/admin/ProductForm";
 
@@ -108,13 +108,10 @@ function ProductsPage() {
   const deleteFn = useServerFn(adminDeleteProduct);
   const bulkFn = useServerFn(adminBulkProducts);
   const uploadFn = useServerFn(adminGetUploadUrl);
-  const bulkUpsertFn = useServerFn(adminBulkUpsertProducts);
-  const exportFn = useServerFn(adminExportProducts);
 
   const cats = useQuery({ queryKey: ["admin-cats"], queryFn: () => catsFn() });
 
   const [bulkOpen, setBulkOpen] = useState(false);
-  const [exporting, setExporting] = useState(false);
 
 
   const [q, setQ] = useState("");
@@ -222,7 +219,7 @@ function ProductsPage() {
             onClick={() => setBulkOpen(true)}
             className="border-teal-600 text-teal-700 hover:bg-teal-50 rounded-full"
           >
-            <Upload className="h-4 w-4 mr-1" /> Import / Export CSV
+            <Upload className="h-4 w-4 mr-1" /> Bulk import / export
           </Button>
           <Button onClick={() => setDrawer(emptyProduct())} className="bg-[#14B8A6] hover:bg-[#0F9488] rounded-full">
             <Plus className="h-4 w-4 mr-1" /> Add Product
@@ -308,7 +305,7 @@ function ProductsPage() {
           )}
         </SheetContent>
       </Sheet>
-      <CatalogImportModal
+      <BulkImportDialog
         open={bulkOpen}
         onClose={() => setBulkOpen(false)}
         onImported={() => { qc.invalidateQueries({ queryKey: ["admin-products"] }); qc.invalidateQueries({ queryKey: ["admin-catalog"] }); }}
